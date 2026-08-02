@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import type { PostMeta } from '~~/shared/types'
+import type { PostList } from '~~/shared/types'
 
 useHead({ title: '标签 · 光屿' })
 
 const route = useRoute()
 const router = useRouter()
 
-const { data: posts } = await useFetch<PostMeta[]>('/api/posts')
+const { data } = await useFetch<PostList>('/api/posts', { query: { all: 1 } })
+const posts = computed(() => data.value?.items ?? [])
 
 const tagCounts = computed(() => {
   const counts = new Map<string, number>()

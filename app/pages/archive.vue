@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import type { PostMeta } from '~~/shared/types'
+import type { PostList, PostMeta } from '~~/shared/types'
 
 useHead({ title: '归档 · 光屿' })
 
-const { data: posts } = await useFetch<PostMeta[]>('/api/posts')
+const { data } = await useFetch<PostList>('/api/posts', { query: { all: 1 } })
 
 const byYear = computed(() => {
   const groups = new Map<string, PostMeta[]>()
-  const sorted = [...(posts.value ?? [])].sort((a, b) => b.date.localeCompare(a.date))
+  const sorted = [...(data.value?.items ?? [])].sort((a, b) => b.date.localeCompare(a.date))
   for (const p of sorted) {
     const year = p.date.slice(0, 4)
     if (!groups.has(year)) groups.set(year, [])
@@ -16,7 +16,7 @@ const byYear = computed(() => {
   return [...groups.entries()]
 })
 
-const total = computed(() => posts.value?.length ?? 0)
+const total = computed(() => data.value?.total ?? 0)
 </script>
 
 <template>

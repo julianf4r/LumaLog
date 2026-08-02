@@ -1,7 +1,22 @@
 <script setup lang="ts">
-import type { PostMeta } from '~~/shared/types'
+import type { PostList } from '~~/shared/types'
 
-const { data: posts } = await useFetch<PostMeta[]>('/api/posts')
+const route = useRoute()
+const page = computed(() => Math.max(1, Number(route.query.page) || 1))
+
+const { data } = await useFetch<PostList>('/api/posts', {
+  query: { page },
+  watch: [page],
+})
+
+// 翻页后回到顶部（仅 query 变化不会触发路由默认的滚动行为）
+watch(page, () => {
+  if (import.meta.client) window.scrollTo({ top: 0, behavior: 'smooth' })
+})
+
+const pages = computed(() =>
+  Array.from({ length: data.value?.pageCount ?? 1 }, (_, i) => i + 1),
+)
 </script>
 
 <template>
@@ -16,8 +31,38 @@ const { data: posts } = await useFetch<PostMeta[]>('/api/posts')
     </section>
 
     <section class="feed">
-      <PostCard v-for="post in posts" :key="post.slug" :post="post" />
+      <PostCard v-for="post in data?.items" :key="post.slug" :post="post" />
     </section>
+
+    <nav v-if="(data?.pageCount ?? 1) > 1" class="pager" aria-label="分页">
+      <NuxtLink
+        class="pager-btn"
+        :class="{ disabled: page <= 1 }"
+        :to="{ query: page - 1 > 1 ? { page: page - 1 } : {} }"
+        aria-label="上一页"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+      </NuxtLink>
+
+      <NuxtLink
+        v-for="n in pages"
+        :key="n"
+        class="pager-num"
+        :class="{ active: n === page }"
+        :to="{ query: n > 1 ? { page: n } : {} }"
+      >
+        {{ n }}
+      </NuxtLink>
+
+      <NuxtLink
+        class="pager-btn"
+        :class="{ disabled: page >= (data?.pageCount ?? 1) }"
+        :to="{ query: { page: Math.min(page + 1, data?.pageCount ?? 1) } }"
+        aria-label="下一页"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+      </NuxtLink>
+    </nav>
   </div>
 </template>
 
@@ -90,5 +135,55 @@ const { data: posts } = await useFetch<PostMeta[]>('/api/posts')
   flex-direction: column;
   gap: 1.1rem;
   padding-bottom: 1rem;
+}
+
+/* ---- 分页 ---- */
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 2rem 0 0.5rem;
+}
+
+.pager-btn,
+.pager-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 0.5rem;
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  transition: color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+
+.pager-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.pager-btn:hover,
+.pager-num:hover {
+  color: var(--accent);
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+.pager-num.active {
+  color: #fff;
+  background: var(--grad-accent);
+  border-color: transparent;
+  box-shadow: 0 4px 14px var(--glow-violet);
+}
+
+.pager-btn.disabled {
+  opacity: 0.35;
+  pointer-events: none;
 }
 </style>

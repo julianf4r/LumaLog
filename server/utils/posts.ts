@@ -250,6 +250,221 @@ SELECT title FROM posts_fts WHERE posts_fts MATCH '呼吸感';
 小的、持续的、诚实的记录，比宏大而搁浅的写作计划有价值得多。就像这座小岛——一次只需要放上一点微光。
 `,
   },
+  {
+    slug: 'docker-single-container',
+    title: '一个容器跑一切：小项目的部署哲学',
+    excerpt: '当项目小到一定程度，最好的架构就是没有架构。一个容器、一个数据文件、一条启动命令。',
+    date: '2026-04-18',
+    tags: ['部署', 'Docker'],
+    pinned: false,
+    content: `
+小项目部署的第一原则：**能塞进一个容器的，就不要拆成两个**。
+
+## 一份 Dockerfile 的全部
+
+\`\`\`dockerfile
+FROM node:22-alpine
+WORKDIR /app
+COPY .output .output
+ENV NODE_OPTIONS="--max-old-space-size=256"
+EXPOSE 3000
+CMD ["node", ".output/server/index.mjs"]
+\`\`\`
+
+数据库是 SQLite 文件，图片在本地目录，两者用 volume 挂出来。备份、迁移、回滚，全都退化成文件操作。
+
+## 复杂度守恒，但可以转移
+
+微服务解决的是「人多」的问题，不是「机器多」的问题。一个人的项目，复杂度应该压到最低——省下来的心智，拿去写文章不好吗。
+`,
+  },
+  {
+    slug: 'caddy-https',
+    title: 'Caddy：把 HTTPS 变成一行配置',
+    excerpt: '证书申请、续期、重定向，这些 Nginx 时代的仪式感，在 Caddy 里只剩一行域名。',
+    date: '2026-03-25',
+    tags: ['部署'],
+    pinned: false,
+    content: `
+第一次用 Caddy 的人都会经历一个怀疑时刻：就这？
+
+## 完整的反向代理配置
+
+\`\`\`nginx
+blog.example.com {
+    reverse_proxy localhost:3000
+}
+\`\`\`
+
+是的，这就是全部。证书自动向 Let's Encrypt 申请、自动续期、HTTP 自动跳转 HTTPS、HTTP/2 默认开启。
+
+## 它凭什么这么简单
+
+Caddy 把「99% 的人都需要的默认值」直接做成了默认行为，而不是让每个人抄一遍同样的配置模板。工具的进步，往往就是把仪式感变成默认值。
+`,
+  },
+  {
+    slug: 'dark-mode-details',
+    title: '暗色模式的十个细节',
+    excerpt: '把背景改成黑色只是第一步。真正的暗色模式，藏在阴影、图片、代码高亮这些容易被忽略的角落里。',
+    date: '2026-02-14',
+    tags: ['前端', '设计'],
+    pinned: false,
+    content: `
+很多网站的暗色模式是「亮色反转」，看两分钟就眼睛疼。好的暗色模式至少要处理这些细节。
+
+## 背景不要用纯黑
+
+\`#000\` 对比度过于剧烈，长文阅读非常疲劳。深蓝或深灰底色（比如 \`#0a0e1a\`）柔和得多，也更有夜空的氛围。
+
+## 阴影在暗色下会失效
+
+暗底上的黑影几乎不可见。暗色模式的「层次感」要靠**边框透明度**和**微光**来做：
+
+\`\`\`css
+.dark .card {
+  border: 1px solid rgba(148, 168, 255, 0.11);
+  box-shadow: 0 14px 44px rgba(120, 140, 255, 0.13);
+}
+\`\`\`
+
+## 其他几个容易漏的
+
+- 图片加一层轻微的亮度压暗，避免刺眼
+- 代码高亮必须换主题，而不是沿用亮色配色
+- 切换主题时给 0.3s 过渡，避免「闪白」
+- 记住用户的选择，并且首帧就应用，刷新不能闪
+`,
+  },
+  {
+    slug: 'ts-narrowing',
+    title: 'TypeScript 类型收窄的心智模型',
+    excerpt: '与其背诵 type guard 的语法清单，不如建立一个统一的心智模型：类型是集合，收窄是求交集。',
+    date: '2026-01-08',
+    tags: ['前端', 'TypeScript'],
+    pinned: false,
+    content: `
+把类型理解为**值的集合**，几乎所有收窄行为都能推导出来。
+
+## 收窄就是求交集
+
+\`\`\`typescript
+function fmt(input: string | number) {
+  if (typeof input === 'string') {
+    // 此处 input 的集合 = (string | number) ∩ string = string
+    return input.toUpperCase()
+  }
+  return input.toFixed(2) // 剩下的集合自然是 number
+}
+\`\`\`
+
+## 为什么自定义函数默认不收窄
+
+因为 TypeScript 不会分析函数体的语义，除非你用 \`is\` 显式承诺：
+
+\`\`\`typescript
+function isPost(v: unknown): v is { slug: string } {
+  return typeof v === 'object' && v !== null && 'slug' in v
+}
+\`\`\`
+
+\`is\` 谓词本质上是你替编译器背书。背错了书，运行时就会替你还债——所以谓词函数一定要写得保守。
+`,
+  },
+  {
+    slug: 'reading-2025',
+    title: '2025 年读过的书',
+    excerpt: '年底盘点。今年读得杂，技术书反而是最少的一类，收获最大的是几本讲「如何思考」的书。',
+    date: '2025-12-30',
+    tags: ['随笔'],
+    pinned: false,
+    content: `
+年底照例盘点。今年一共读完 23 本，比去年少，但精读的比例高了。
+
+## 印象最深的三本
+
+1. **《笔记的方法》**——记笔记不是摘抄，是用自己的话重写。这个原则直接改变了我的博客写法。
+2. **《软件设计的哲学》**——「复杂度是渐进累积的」，深以为然。每个「就这一次」的妥协都在给未来挖坑。
+3. **《禅与摩托车维修艺术》**——重读。年轻时读到的是公路故事，现在读到的全是「良质」。
+
+## 一点变化
+
+今年开始强迫自己：读完一本书必须写点什么，哪怕三句话。写不出来的，说明其实没读进去。
+
+> 阅读是输入，写作是编译。不编译的代码，永远不知道有没有 bug。
+
+明年的愿望是把「在读列表」控制在三本以内——贪多的结果往往是全都停在 30%。
+`,
+  },
+  {
+    slug: 'vue-composables',
+    title: '写好一个 Vue Composable 的三条原则',
+    excerpt: '组合式函数是 Vue 3 最优雅的抽象，但写不好就会变成另一种形式的面条代码。',
+    date: '2025-11-16',
+    tags: ['前端', 'Vue'],
+    pinned: false,
+    content: `
+写了两年组合式 API，沉淀下来三条原则。
+
+## 一、返回 ref，别返回 reactive
+
+\`\`\`typescript
+export function useCounter() {
+  const count = ref(0)
+  const double = computed(() => count.value * 2)
+  return { count, double } // 解构后依然保持响应性
+}
+\`\`\`
+
+reactive 对象一解构就断了响应性，而使用方几乎一定会解构。
+
+## 二、副作用必须自己收尾
+
+在 composable 内部注册的监听器、定时器，必须在内部用 \`onUnmounted\` 清理。谁创建，谁销毁——把清理责任丢给调用方，迟早漏。
+
+## 三、输入用 MaybeRefOrGetter
+
+\`\`\`typescript
+import { toValue, type MaybeRefOrGetter } from 'vue'
+
+export function useTitle(title: MaybeRefOrGetter<string>) {
+  watchEffect(() => { document.title = toValue(title) })
+}
+\`\`\`
+
+这样调用方传静态值、ref、getter 都行，composable 的兼容性一下子就上去了。
+`,
+  },
+  {
+    slug: 'terminal-setup',
+    title: '我的终端环境记录',
+    excerpt: '工欲善其事。记录一下当前的终端配置，也方便未来的自己在新机器上快速还原。',
+    date: '2025-10-05',
+    tags: ['工具'],
+    pinned: false,
+    content: `
+换新机器最烦的就是重配环境，这篇算是给自己的备忘。
+
+## 核心组合
+
+- **Shell**：zsh + starship 提示符，配置一个文件搞定
+- **多路复用**：tmux，SSH 断线不丢会话，1G 小服务器上的救命稻草
+- **文件查找**：fzf + ripgrep，模糊搜索快到飞起
+
+## 几条离不开的别名
+
+\`\`\`bash
+alias ll='eza -la --icons --git'
+alias gs='git status -sb'
+alias dcu='docker compose up -d'
+alias dcl='docker compose logs -f --tail=100'
+\`\`\`
+
+## 一条心得
+
+配置要少而精。每加一个插件都问一句：一个月后我还会用它吗？答案是否定的东西，现在就不要装。环境和代码一样，都需要抵抗熵增。
+`,
+  },
 ]
 
 function countReadingMinutes(content: string): number {
@@ -282,5 +497,6 @@ export function listPosts(): PostMeta[] {
 export async function getPost(slug: string): Promise<PostDetail | null> {
   const post = POSTS.find((p) => p.slug === slug)
   if (!post) return null
-  return { ...toMeta(post), html: await renderMarkdown(post.content) }
+  const { html, toc } = await renderMarkdown(post.content)
+  return { ...toMeta(post), html, toc }
 }

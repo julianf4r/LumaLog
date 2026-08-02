@@ -1,5 +1,6 @@
 import MarkdownIt from 'markdown-it'
 import { createHighlighter, type Highlighter } from 'shiki'
+import type { TocItem } from '~~/shared/types'
 
 const LANGS = [
   'javascript', 'typescript', 'tsx', 'vue', 'bash', 'shell', 'json',
@@ -35,6 +36,22 @@ async function getMd() {
     const highlighter = await getHighlighter()
     const md = new MarkdownIt({ html: false, linkify: true })
 
+    // 为 h2/h3 生成锚点 id，并收集大纲（通过 env 携带每次渲染的状态）
+    md.renderer.rules.heading_open = (tokens, idx, options, env, self) => {
+      const token = tokens[idx]!
+      if (token.tag === 'h2' || token.tag === 'h3') {
+        const text = tokens[idx + 1]?.content ?? ''
+        const id = slugifyHeading(text, env.usedIds as Map<string, number>)
+        token.attrSet('id', id)
+        ;(env.toc as TocItem[]).push({
+          id,
+          text,
+          level: token.tag === 'h2' ? 2 : 3,
+        })
+      }
+      return self.renderToken(tokens, idx, options)
+    }
+
     md.renderer.rules.fence = (tokens, idx) => {
       const token = tokens[idx]!
       const lang = (token.info || '').trim().split(/\s+/)[0] || ''
@@ -56,10 +73,26 @@ async function getMd() {
   return mdPromise
 }
 
-export async function renderMarkdown(src: string): Promise<string> {
+function slugifyHeading(text: string, used: Map<string, number>): string {
+  let slug = text
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s-]/gu, '')
+    .replace(/\s+/g, '-')
+  if (!slug) slug = 'section'
+  const n = used.get(slug) ?? 0
+  used.set(slug, n + 1)
+  return n ? `${slug}-${n}` : slug
+}
+
+export async function renderMarkdown(
+  src: string,
+): Promise<{ html: string; toc: TocItem[] }> {
   const md = await getMd()
-  return md
-    .render(src)
+  const env = { toc: [] as TocItem[], usedIds: new Map<string, number>() }
+  const html = md
+    .render(src, env)
     .replaceAll('<table>', '<div class="table-wrap"><table>')
     .replaceAll('</table>', '</table></div>')
+  return { html, toc: env.toc }
 }

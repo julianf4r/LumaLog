@@ -25,6 +25,27 @@ function onArticleClick(e: MouseEvent) {
     setTimeout(() => btn.classList.remove('copied'), 1600)
   })
 }
+
+// —— 大纲滚动高亮 ——
+const activeId = ref('')
+
+function onScroll() {
+  const headings = Array.from(
+    document.querySelectorAll<HTMLElement>('.prose h2[id], .prose h3[id]'),
+  )
+  let current = ''
+  for (const h of headings) {
+    if (h.getBoundingClientRect().top <= 110) current = h.id
+    else break
+  }
+  activeId.value = current || headings[0]?.id || ''
+}
+
+onMounted(() => {
+  onScroll()
+  window.addEventListener('scroll', onScroll, { passive: true })
+})
+onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
 </script>
 
 <template>
@@ -48,7 +69,27 @@ function onArticleClick(e: MouseEvent) {
       </div>
     </header>
 
-    <div class="prose" @click="onArticleClick" v-html="post.html" />
+    <div class="post-body">
+      <div class="prose" @click="onArticleClick" v-html="post.html" />
+
+      <aside v-if="post.toc.length" class="post-toc" aria-label="文章大纲">
+        <nav class="toc">
+          <p class="toc-title">
+            <span class="toc-title-mark" aria-hidden="true" />
+            大纲
+          </p>
+          <a
+            v-for="item in post.toc"
+            :key="item.id"
+            :href="`#${item.id}`"
+            class="toc-link"
+            :class="[`toc-lv${item.level}`, { active: item.id === activeId }]"
+          >
+            {{ item.text }}
+          </a>
+        </nav>
+      </aside>
+    </div>
 
     <footer class="post-foot">
       <NuxtLink to="/" class="post-back">
@@ -117,6 +158,84 @@ function onArticleClick(e: MouseEvent) {
 .post-tag:hover {
   border-color: var(--border-strong);
   box-shadow: 0 0 12px var(--glow-violet);
+}
+
+/* —— 正文 + 右侧大纲 ——
+   正文保持居中，大纲绝对定位在容器右侧的富余边距里，
+   仅在足够宽的屏幕上显示，不影响正文的对称留白 */
+.post-body {
+  position: relative;
+}
+
+.post-toc {
+  display: none;
+  position: absolute;
+  left: 100%;
+  top: 0;
+  bottom: 0;
+  width: 230px;
+  margin-left: 3rem;
+}
+
+@media (min-width: 1200px) {
+  .post-toc {
+    display: block;
+  }
+}
+
+.toc {
+  position: sticky;
+  top: 92px;
+  max-height: calc(100vh - 130px);
+  overflow-y: auto;
+  padding: 0.25rem 0;
+  scrollbar-width: thin;
+}
+
+.toc-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0.25em;
+  color: var(--text-3);
+}
+
+.toc-title-mark {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--grad-accent);
+  box-shadow: 0 0 8px var(--glow-violet);
+}
+
+.toc-link {
+  display: block;
+  padding: 0.32rem 0.8rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-3);
+  border-left: 2px solid var(--border);
+  transition: color 0.2s, border-color 0.2s;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toc-lv3 {
+  padding-left: 1.7rem;
+  font-size: 0.8rem;
+}
+
+.toc-link:hover {
+  color: var(--text);
+}
+
+.toc-link.active {
+  color: var(--accent);
+  border-left-color: var(--accent);
 }
 
 .post-foot {
