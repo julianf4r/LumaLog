@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0a0e1a"/>
+      <stop offset="1" stop-color="#141c36"/>
+    </linearGradient>
+    <radialGradient id="a1" cx="0.3" cy="0.35" r="0.55">
+      <stop offset="0" stop-color="#6bdcff" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#6bdcff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="a2" cx="0.68" cy="0.3" r="0.6">
+      <stop offset="0" stop-color="#a79bff" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#a79bff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="a3" cx="0.5" cy="0.62" r="0.5">
+      <stop offset="0" stop-color="#f2a7d8" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#f2a7d8" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1a2342"/>
+      <stop offset="1" stop-color="#0c1122"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="560" fill="url(#sky)"/>
+  <ellipse cx="360" cy="200" rx="520" ry="300" fill="url(#a1)"/>
+  <ellipse cx="820" cy="170" rx="560" ry="320" fill="url(#a2)"/>
+  <ellipse cx="600" cy="350" rx="480" ry="260" fill="url(#a3)"/>
+  <g fill="#dfe6ff">
+    <circle cx="150" cy="90" r="1.6" opacity="0.8"/>
+    <circle cx="320" cy="60" r="1.2" opacity="0.6"/>
+    <circle cx="520" cy="110" r="1.4" opacity="0.7"/>
+    <circle cx="700" cy="70" r="1.1" opacity="0.5"/>
+    <circle cx="880" cy="120" r="1.6" opacity="0.8"/>
+    <circle cx="1050" cy="80" r="1.2" opacity="0.6"/>
+    <circle cx="980" cy="200" r="1" opacity="0.5"/>
+    <circle cx="230" cy="180" r="1" opacity="0.5"/>
+    <circle cx="420" cy="230" r="1.2" opacity="0.55"/>
+    <circle cx="760" cy="250" r="1.1" opacity="0.5"/>
+  </g>
+  <rect y="430" width="1200" height="130" fill="url(#sea)"/>
+  <ellipse cx="600" cy="432" rx="140" ry="16" fill="#0a0e1a"/>
+  <ellipse cx="600" cy="424" rx="90" ry="12" fill="#141c36"/>
+  <circle cx="600" cy="408" r="6" fill="#a79bff">
+    <animate attributeName="opacity" values="1;0.4;1" dur="3s" repeatCount="indefinite"/>
+  </circle>
+  <ellipse cx="600" cy="470" rx="70" ry="5" fill="#a79bff" opacity="0.18"/>
+</svg>
