@@ -1,0 +1,30 @@
+services:
+  app:
+    # 由 GitHub Actions 构建推送；把 OWNER 换成你的 GitHub 用户名（全小写）
+    image: ghcr.io/OWNER/lumalog:latest
+    restart: unless-stopped
+    environment:
+      NUXT_ADMIN_USERNAME: ${NUXT_ADMIN_USERNAME}
+      NUXT_ADMIN_PASSWORD: ${NUXT_ADMIN_PASSWORD}
+      NUXT_SESSION_PASSWORD: ${NUXT_SESSION_PASSWORD}
+    volumes:
+      - ./data:/data
+    expose:
+      - "3000"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:
