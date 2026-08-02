@@ -498,6 +498,118 @@ img {
   user-select: none;
 }
 
+/* ---------------- 表单与按钮（后台复用） ---------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1.1rem;
+  font-size: 0.92rem;
+  font-weight: 550;
+  color: var(--text-2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  transition: color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s;
+}
+
+.btn:hover {
+  color: var(--accent);
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.btn-primary {
+  color: #fff;
+  background: var(--grad-accent);
+  border-color: transparent;
+}
+
+.btn-primary:hover {
+  color: #fff;
+  box-shadow: 0 6px 18px var(--glow-violet);
+}
+
+.btn-danger:hover {
+  color: #e5484d;
+  border-color: rgba(229, 72, 77, 0.4);
+}
+
+.btn-sm {
+  padding: 0.3rem 0.75rem;
+  font-size: 0.84rem;
+  border-radius: 8px;
+}
+
+.input,
+.textarea {
+  width: 100%;
+  padding: 0.55rem 0.85rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: var(--text);
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input:focus,
+.textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--inline-code-bg);
+}
+
+.textarea {
+  resize: vertical;
+  line-height: 1.7;
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--text-2);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 999px;
+  letter-spacing: 0.05em;
+}
+
+.badge-published {
+  color: #2f9e6e;
+  background: rgba(47, 158, 110, 0.12);
+}
+
+.badge-draft {
+  color: #b98a2f;
+  background: rgba(217, 164, 65, 0.14);
+}
+
+.dark .badge-published {
+  color: #6fdba8;
+}
+
+.dark .badge-draft {
+  color: #e8c06a;
+}
+
 /* Shiki 双主题 */
 .shiki,
 .shiki span {

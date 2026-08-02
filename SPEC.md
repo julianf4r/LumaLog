@@ -57,6 +57,7 @@
 - **域名**：作者已有域名，解析子域名到服务器。
 - **反向代理**：Caddy，自动申请/续期 HTTPS 证书。
 - **运行**：Docker Compose（应用容器 + Caddy），SQLite 数据文件与图片目录挂载卷持久化。
+- **关键环境变量**：`NUXT_ADMIN_USERNAME` / `NUXT_ADMIN_PASSWORD`（管理员账密，开发默认 admin / lumalog-dev，**生产必须覆盖**）、`NUXT_SESSION_PASSWORD`（会话加密密钥，32 位以上随机串）、`NUXT_DATA_DIR`（数据目录，默认 `.data`，存放 SQLite 与上传图片）。
 - **更新流程**：本地/CI 构建镜像 → 服务器拉取 → 重启容器。
 - 运行内存预算约 150–250MB，1G 内存 + swap 兜底，绰绰有余。
 

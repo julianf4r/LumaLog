@@ -2,6 +2,15 @@ export default defineNuxtConfig({
   compatibilityDate: '2026-08-01',
   devtools: { enabled: false },
 
+  modules: ['nuxt-auth-utils'],
+
+  runtimeConfig: {
+    // 生产环境用 NUXT_ADMIN_USERNAME / NUXT_ADMIN_PASSWORD / NUXT_DATA_DIR 覆盖
+    adminUsername: 'admin',
+    adminPassword: 'lumalog-dev',
+    dataDir: '.data',
+  },
+
   css: ['~/assets/css/main.css'],
 
   app: {
@@ -17,7 +26,4 @@ export default defineNuxtConfig({
     pageTransition: { name: 'page', mode: 'out-in' },
   },
 
-  nitro: {
-    // SQLite 与图片目录在里程碑二接入；当前使用内置假数据
-  },
 })

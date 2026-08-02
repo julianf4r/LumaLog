@@ -11,6 +11,7 @@
         <NuxtLink to="/" class="nav-link">首页</NuxtLink>
         <NuxtLink to="/archive" class="nav-link">归档</NuxtLink>
         <NuxtLink to="/tags" class="nav-link">标签</NuxtLink>
+        <NuxtLink to="/search" class="nav-link">搜索</NuxtLink>
         <ThemeToggle />
       </nav>
     </div>
