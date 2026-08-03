@@ -12,9 +12,12 @@
     "PingFang SC", "Microsoft YaHei", monospace;
 
   /* 布局 */
-  --w-content: 46rem;
-  --w-post: 72rem;
-  --w-wide: 64rem;
+  /* --w-wide 是页面外壳宽度：header、首页、文章页、后台共用，保证左右边缘对齐
+     --w-content 用于内容较窄的页面（归档 / 标签 / 搜索），其卡片宽度与首页接近 */
+  --w-content: 52rem;
+  --w-wide: 72rem;
+  --w-rail: 280px;
+  --w-rail-gap: 3rem;
   --r-sm: 8px;
   --r-md: 14px;
   --r-lg: 20px;

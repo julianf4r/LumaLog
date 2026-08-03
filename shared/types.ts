@@ -19,6 +19,14 @@ export interface PostDetail extends PostMeta {
   toc: TocItem[]
 }
 
+export interface SiteStats {
+  total: number
+  tagCount: number
+  days: number
+  years: { year: string; count: number }[]
+  tags: { name: string; count: number }[]
+}
+
 export interface PostList {
   items: PostMeta[]
   total: number

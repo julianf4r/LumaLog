@@ -94,6 +94,38 @@ export async function getPublished(slug: string): Promise<PostDetail | null> {
   return { ...rowToMeta(row), html, toc }
 }
 
+export function siteStats(): SiteStats {
+  const db = useDb()
+  const { total } = db
+    .prepare(`SELECT COUNT(*) AS total FROM posts WHERE status = 'published'`)
+    .get() as { total: number }
+  const years = db
+    .prepare(
+      `SELECT substr(date, 1, 4) AS year, COUNT(*) AS count FROM posts
+       WHERE status = 'published' GROUP BY year ORDER BY year DESC`,
+    )
+    .all() as unknown as { year: string; count: number }[]
+  const tags = db
+    .prepare(
+      `SELECT t.name, COUNT(*) AS count FROM tags t
+       JOIN post_tags pt ON pt.tag_id = t.id
+       JOIN posts p ON p.id = pt.post_id
+       WHERE p.status = 'published'
+       GROUP BY t.id ORDER BY count DESC, t.name`,
+    )
+    .all() as unknown as { name: string; count: number }[]
+  const { first } = db
+    .prepare(`SELECT MIN(date) AS first FROM posts WHERE status = 'published'`)
+    .get() as { first: string | null }
+
+  // 天数在服务端算，避免 SSR 与客户端跨零点产生 hydration 不一致
+  const days = first
+    ? Math.max(1, Math.floor((Date.now() - Date.parse(`${first}T00:00:00Z`)) / 86400000))
+    : 0
+
+  return { total, tagCount: tags.length, days, years, tags }
+}
+
 export function searchPublished(q: string): PostMeta[] {
   const like = `%${q.replace(/[%_]/g, '')}%`
   const rows = useDb()

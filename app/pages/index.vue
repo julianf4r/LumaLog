@@ -20,7 +20,7 @@ const pages = computed(() =>
 </script>
 
 <template>
-  <div class="container">
+  <div class="container-wide">
     <section class="hero">
       <p class="hero-kicker">LUMALOG</p>
       <h1 class="hero-title">光屿</h1>
@@ -30,39 +30,47 @@ const pages = computed(() =>
       </div>
     </section>
 
-    <section class="feed">
-      <PostCard v-for="post in data?.items" :key="post.slug" :post="post" />
-    </section>
+    <div class="home-grid">
+      <div class="home-main">
+        <section class="feed">
+          <PostCard v-for="post in data?.items" :key="post.slug" :post="post" />
+        </section>
 
-    <nav v-if="(data?.pageCount ?? 1) > 1" class="pager" aria-label="分页">
-      <NuxtLink
-        class="pager-btn"
-        :class="{ disabled: page <= 1 }"
-        :to="{ query: page - 1 > 1 ? { page: page - 1 } : {} }"
-        aria-label="上一页"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
-      </NuxtLink>
+        <nav v-if="(data?.pageCount ?? 1) > 1" class="pager" aria-label="分页">
+          <NuxtLink
+            class="pager-btn"
+            :class="{ disabled: page <= 1 }"
+            :to="{ query: page - 1 > 1 ? { page: page - 1 } : {} }"
+            aria-label="上一页"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+          </NuxtLink>
 
-      <NuxtLink
-        v-for="n in pages"
-        :key="n"
-        class="pager-num"
-        :class="{ active: n === page }"
-        :to="{ query: n > 1 ? { page: n } : {} }"
-      >
-        {{ n }}
-      </NuxtLink>
+          <NuxtLink
+            v-for="n in pages"
+            :key="n"
+            class="pager-num"
+            :class="{ active: n === page }"
+            :to="{ query: n > 1 ? { page: n } : {} }"
+          >
+            {{ n }}
+          </NuxtLink>
 
-      <NuxtLink
-        class="pager-btn"
-        :class="{ disabled: page >= (data?.pageCount ?? 1) }"
-        :to="{ query: { page: Math.min(page + 1, data?.pageCount ?? 1) } }"
-        aria-label="下一页"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6" /></svg>
-      </NuxtLink>
-    </nav>
+          <NuxtLink
+            class="pager-btn"
+            :class="{ disabled: page >= (data?.pageCount ?? 1) }"
+            :to="{ query: { page: Math.min(page + 1, data?.pageCount ?? 1) } }"
+            aria-label="下一页"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+          </NuxtLink>
+        </nav>
+      </div>
+
+      <aside class="home-side">
+        <HomeSidebar />
+      </aside>
+    </div>
   </div>
 </template>
 
@@ -128,6 +136,32 @@ const pages = computed(() =>
 
 @media (prefers-reduced-motion: reduce) {
   .hero-beacon { animation: none; }
+}
+
+/* 主列 + 右侧栏，与文章页的骨架保持一致（主列 784px / 右栏 280px） */
+.home-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--w-rail);
+  gap: var(--w-rail-gap);
+}
+
+.home-main {
+  min-width: 0;
+}
+
+@media (max-width: 1023px) {
+  .home-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .home-main {
+    max-width: 52rem;
+    margin: 0 auto;
+  }
+
+  .home-side {
+    display: none;
+  }
 }
 
 .feed {

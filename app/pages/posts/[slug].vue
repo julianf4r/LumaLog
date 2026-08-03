@@ -49,7 +49,7 @@ onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
 </script>
 
 <template>
-  <article v-if="post" class="container post">
+  <article v-if="post" class="container-wide post">
     <div class="post-grid">
       <div class="post-main">
         <header class="post-head">
@@ -103,17 +103,16 @@ onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
 </template>
 
 <style scoped>
-/* 文章页用更宽的容器：正文列 + 大纲列作为整体居中 */
 .post {
-  max-width: var(--w-post);
   padding-top: 1rem;
 }
 
-/* 大纲列需要撑满整行高度，其内部的 .toc 才有 sticky 的移动空间 */
+/* 与首页同一套骨架：主列 784px + 右栏 280px
+   大纲列需要撑满整行高度，其内部的 .toc 才有 sticky 的移动空间 */
 .post-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 220px;
-  gap: 3rem;
+  grid-template-columns: minmax(0, 1fr) var(--w-rail);
+  gap: var(--w-rail-gap);
 }
 
 .post-main {
