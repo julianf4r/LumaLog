@@ -15,15 +15,16 @@ useHead(() => ({
 }))
 
 // 代码块一键复制（事件委托，作用于整篇文章）
-function onArticleClick(e: MouseEvent) {
+async function onArticleClick(e: MouseEvent) {
   const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('.code-copy')
   if (!btn) return
   const code = btn.closest('.code-block')?.querySelector('pre code')
   if (!code) return
-  navigator.clipboard.writeText(code.textContent ?? '').then(() => {
+
+  if (await copyText(code.textContent ?? '')) {
     btn.classList.add('copied')
     setTimeout(() => btn.classList.remove('copied'), 1600)
-  })
+  }
 }
 
 // —— 大纲滚动高亮 ——

@@ -6,6 +6,9 @@ useHead({ title: '文章管理 · 光屿' })
 
 const { data: posts, refresh } = await useFetch<AdminPost[]>('/api/admin/posts')
 
+const toast = useToast()
+const dialog = useDialog()
+
 const filter = ref<'all' | 'published' | 'draft'>('all')
 
 const filtered = computed(() => {
@@ -29,12 +32,21 @@ async function togglePin(post: AdminPost) {
     body: { ...post, pinned: !post.pinned },
   })
   await refresh()
+  toast.push(post.pinned ? '已取消置顶' : '已置顶')
 }
 
 async function remove(post: AdminPost) {
-  if (!confirm(`确认删除「${post.title}」？此操作不可恢复。`)) return
+  const ok = await dialog.confirm({
+    title: '删除文章',
+    message: `确认删除「${post.title}」？此操作不可恢复。`,
+    confirmText: '删除',
+    danger: true,
+  })
+  if (!ok) return
+
   await $fetch(`/api/admin/posts/${post.id}`, { method: 'DELETE' })
   await refresh()
+  toast.push('文章已删除')
 }
 </script>
 

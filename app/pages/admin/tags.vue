@@ -6,20 +6,37 @@ const { data: tags, refresh } = await useFetch<{ name: string; count: number }[]
   '/api/admin/tags',
 )
 
+const toast = useToast()
+const dialog = useDialog()
+
 async function rename(name: string) {
-  const to = prompt(`将标签「${name}」重命名为：`, name)?.trim()
+  const to = await dialog.prompt({
+    title: '重命名标签',
+    message: `为「${name}」输入新的名称。若目标名称已存在，两个标签会自动合并。`,
+    prompt: { label: '新名称', value: name },
+    confirmText: '重命名',
+  })
   if (!to || to === name) return
+
   await $fetch('/api/admin/tags/rename', { method: 'POST', body: { from: name, to } })
   await refresh()
+  toast.push(`已重命名为「${to}」`)
 }
 
 async function remove(name: string, count: number) {
-  const hint = count
-    ? `确认删除标签「${name}」？${count} 篇文章将失去该标签（文章本身不受影响）。`
-    : `确认删除标签「${name}」？`
-  if (!confirm(hint)) return
+  const ok = await dialog.confirm({
+    title: '删除标签',
+    message: count
+      ? `确认删除标签「${name}」？${count} 篇文章将失去该标签，文章本身不受影响。`
+      : `确认删除标签「${name}」？`,
+    confirmText: '删除',
+    danger: true,
+  })
+  if (!ok) return
+
   await $fetch('/api/admin/tags/delete', { method: 'POST', body: { name } })
   await refresh()
+  toast.push('标签已删除')
 }
 </script>
 

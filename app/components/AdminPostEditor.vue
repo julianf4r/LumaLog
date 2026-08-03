@@ -4,6 +4,7 @@ import type { TocItem } from '~~/shared/types'
 
 const props = defineProps<{ post?: AdminPost | null }>()
 
+const toast = useToast()
 const isEdit = computed(() => !!props.post)
 
 const form = reactive({
@@ -90,8 +91,9 @@ async function uploadImage(file: File) {
       body: fd,
     })
     insertAtCursor(`\n![图片](${url})\n`)
+    toast.push('图片已上传')
   } catch (err: any) {
-    errorMsg.value = err?.statusMessage || '图片上传失败'
+    toast.push(err?.statusMessage || err?.data?.statusMessage || '图片上传失败', 'error')
   } finally {
     uploading.value = false
   }
@@ -153,8 +155,11 @@ async function save(status: 'draft' | 'published') {
       await $fetch('/api/admin/posts', { method: 'POST', body: payload(status) })
     }
     await navigateTo('/admin')
+    toast.push(status === 'published' ? '文章已发布' : '草稿已保存')
   } catch (err: any) {
-    errorMsg.value = err?.statusMessage || err?.data?.statusMessage || '保存失败'
+    const msg = err?.statusMessage || err?.data?.statusMessage || '保存失败'
+    errorMsg.value = msg
+    toast.push(msg, 'error')
   } finally {
     saving.value = false
   }

@@ -30,6 +30,9 @@ async function logout() {
     <main class="admin-main admin-shell">
       <slot />
     </main>
+
+    <AppToast />
+    <AppDialog />
   </div>
 </template>
 

@@ -6,8 +6,10 @@ useHead({ title: '素材 · 光屿' })
 
 const { data, refresh } = await useFetch<MediaList>('/api/admin/uploads')
 
+const toast = useToast()
+const dialog = useDialog()
+
 const onlyOrphan = ref(false)
-const message = ref('')
 
 const shown = computed(() => {
   const items = data.value?.items ?? []
@@ -24,46 +26,54 @@ const groups = computed(() => {
   return [...map.entries()].sort((a, b) => b[0].localeCompare(a[0]))
 })
 
-function flash(text: string) {
-  message.value = text
-  setTimeout(() => (message.value = ''), 2000)
-}
-
 async function copy(text: string, label: string) {
-  await navigator.clipboard.writeText(text)
-  flash(`${label}已复制`)
+  if (await copyText(text)) toast.push(`${label}已复制`)
+  else toast.push('复制失败，请手动选中后复制', 'error')
 }
 
 async function remove(item: MediaItem) {
-  if (item.refs.length) {
-    const list = item.refs.map((r) => `· ${r.title}`).join('\n')
-    const ok = confirm(
-      `这张图片正被以下 ${item.refs.length} 篇文章引用：\n\n${list}\n\n` +
-        `删除后这些文章里的图片会变成裂图。确认删除？`,
-    )
-    if (!ok) return
-  } else if (!confirm(`确认删除 ${item.name}？此操作不可恢复。`)) {
-    return
-  }
+  const ok = item.refs.length
+    ? await dialog.confirm({
+        title: '删除被引用的图片',
+        message: `这张图片正被以下 ${item.refs.length} 篇文章引用，删除后它们的图片会变成裂图。确认删除？`,
+        items: item.refs.map((r) => r.title),
+        confirmText: '仍然删除',
+        danger: true,
+      })
+    : await dialog.confirm({
+        title: '删除图片',
+        message: `确认删除 ${item.name}？此操作不可恢复。`,
+        confirmText: '删除',
+        danger: true,
+      })
+  if (!ok) return
 
   await $fetch('/api/admin/uploads/delete', {
     method: 'POST',
     body: { url: item.url, force: true },
   })
   await refresh()
-  flash('已删除')
+  toast.push('图片已删除')
 }
 
 async function cleanOrphans() {
   const orphans = (data.value?.items ?? []).filter((i) => !i.refs.length)
   if (!orphans.length) return
-  if (!confirm(`确认删除 ${orphans.length} 张未被任何文章引用的图片？此操作不可恢复。`)) return
+
+  const ok = await dialog.confirm({
+    title: '清理孤儿图片',
+    message: `以下 ${orphans.length} 张图片没有被任何文章引用，确认全部删除？此操作不可恢复。`,
+    items: orphans.map((o) => o.name),
+    confirmText: '全部删除',
+    danger: true,
+  })
+  if (!ok) return
 
   for (const o of orphans) {
     await $fetch('/api/admin/uploads/delete', { method: 'POST', body: { url: o.url } })
   }
   await refresh()
-  flash(`已清理 ${orphans.length} 张孤儿图片`)
+  toast.push(`已清理 ${orphans.length} 张孤儿图片`)
 }
 
 // 直接在素材页上传
@@ -79,9 +89,9 @@ async function onPick() {
     fd.append('file', file)
     await $fetch('/api/admin/upload', { method: 'POST', body: fd })
     await refresh()
-    flash('已上传')
+    toast.push('图片已上传')
   } catch (err: any) {
-    flash(err?.statusMessage || '上传失败')
+    toast.push(err?.statusMessage || err?.data?.statusMessage || '上传失败', 'error')
   } finally {
     uploading.value = false
     if (fileRef.value) fileRef.value.value = ''
@@ -124,8 +134,6 @@ async function onPick() {
         </button>
       </div>
     </div>
-
-    <p v-if="message" class="flash">{{ message }}</p>
 
     <section v-for="[month, items] in groups" :key="month" class="group">
       <p class="group-title">{{ month.replace('-', ' 年 ') }} 月</p>
@@ -192,16 +200,6 @@ async function onPick() {
   color: var(--on-accent);
   background: var(--accent);
   border-color: transparent;
-}
-
-.flash {
-  margin: 0 0 1rem;
-  padding: 0.45rem 0.9rem;
-  font-size: 0.85rem;
-  color: var(--accent);
-  background: var(--inline-code-bg);
-  border-radius: 10px;
-  display: inline-block;
 }
 
 .group {
