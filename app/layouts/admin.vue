@@ -20,6 +20,7 @@ async function logout() {
         <nav class="admin-nav">
           <NuxtLink to="/admin" class="admin-nav-link">文章</NuxtLink>
           <NuxtLink to="/admin/tags" class="admin-nav-link">标签</NuxtLink>
+          <NuxtLink to="/admin/media" class="admin-nav-link">素材</NuxtLink>
           <NuxtLink to="/" class="admin-nav-link">查看前台</NuxtLink>
           <ThemeToggle />
           <button class="btn btn-sm" type="button" @click="logout">退出</button>

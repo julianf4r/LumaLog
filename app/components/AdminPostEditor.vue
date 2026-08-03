@@ -111,6 +111,14 @@ function onPickFile() {
   if (fileRef.value) fileRef.value.value = ''
 }
 
+// 从素材库挑一张已有的图片插入，避免重复上传同一张图
+const pickerOpen = ref(false)
+
+function insertFromLibrary(url: string) {
+  insertAtCursor(`\n![图片](${url})\n`)
+  pickerOpen.value = false
+}
+
 // —— 保存 ——
 const saving = ref(false)
 const errorMsg = ref('')
@@ -190,6 +198,7 @@ async function save(status: 'draft' | 'published') {
         <button class="btn btn-sm" type="button" :disabled="uploading" @click="fileRef?.click()">
           {{ uploading ? '上传中…' : '插入图片' }}
         </button>
+        <button class="btn btn-sm" type="button" @click="pickerOpen = true">从素材库选择</button>
         <span class="editor-hint">支持直接粘贴图片</span>
         <input ref="fileRef" type="file" accept="image/*" hidden @change="onPickFile">
       </div>
@@ -210,6 +219,12 @@ async function save(status: 'draft' | 'published') {
         <div class="prose" v-html="previewHtml" />
       </div>
     </div>
+
+    <AdminMediaPicker
+      v-if="pickerOpen"
+      @close="pickerOpen = false"
+      @pick="insertFromLibrary"
+    />
 
     <p v-if="errorMsg" class="editor-error">{{ errorMsg }}</p>
 
