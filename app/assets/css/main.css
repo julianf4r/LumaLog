@@ -412,14 +412,15 @@ img {
 }
 
 .code-block-head::before {
-  /* 三枚小圆点，柔和版 */
+  /* 三枚小圆点，柔和版。色标必须用像素：写成百分比时是相对渐变半径计算的，
+     会让实心区域只有半径的一半，圆点凭空缩水一圈 */
   content: "";
   width: 34px;
   height: 10px;
-  background: radial-gradient(circle 4px at 5px 50%, var(--accent-cyan) 45%, transparent 50%),
-    radial-gradient(circle 4px at 17px 50%, var(--accent-violet) 45%, transparent 50%),
-    radial-gradient(circle 4px at 29px 50%, var(--accent-pink) 45%, transparent 50%);
-  opacity: 0.75;
+  background: radial-gradient(circle at 5px 50%, var(--accent-cyan) 0 4px, transparent 4.5px),
+    radial-gradient(circle at 17px 50%, var(--accent-violet) 0 4px, transparent 4.5px),
+    radial-gradient(circle at 29px 50%, var(--accent-pink) 0 4px, transparent 4.5px);
+  opacity: 0.85;
   flex: none;
 }
 
