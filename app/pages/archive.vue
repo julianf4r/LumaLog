@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import type { PostList, PostMeta } from '~~/shared/types'
+import type { ArchiveItem } from '~~/shared/types'
 
 useHead({ title: '归档 · 光屿' })
 
-const { data } = await useFetch<PostList>('/api/posts', { query: { all: 1 } })
+// 归档接口已按日期倒序返回，且只含必要字段
+const { data: posts } = await useFetch<ArchiveItem[]>('/api/archive')
 
 const byYear = computed(() => {
-  const groups = new Map<string, PostMeta[]>()
-  const sorted = [...(data.value?.items ?? [])].sort((a, b) => b.date.localeCompare(a.date))
-  for (const p of sorted) {
+  const groups = new Map<string, ArchiveItem[]>()
+  for (const p of posts.value ?? []) {
     const year = p.date.slice(0, 4)
     if (!groups.has(year)) groups.set(year, [])
     groups.get(year)!.push(p)
@@ -16,7 +16,7 @@ const byYear = computed(() => {
   return [...groups.entries()]
 })
 
-const total = computed(() => data.value?.total ?? 0)
+const total = computed(() => posts.value?.length ?? 0)
 </script>
 
 <template>

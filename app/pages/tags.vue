@@ -1,33 +1,30 @@
 <script setup lang="ts">
-import type { PostList } from '~~/shared/types'
+import type { PostList, SiteStats } from '~~/shared/types'
 
 useHead({ title: '标签 · 光屿' })
 
 const route = useRoute()
-const router = useRouter()
 
-const { data } = await useFetch<PostList>('/api/posts', { query: { all: 1 } })
-const posts = computed(() => data.value?.items ?? [])
+const active = computed(() => String(route.query.t ?? '').trim())
+const page = computed(() => Math.max(1, Number(route.query.page) || 1))
 
-const tagCounts = computed(() => {
-  const counts = new Map<string, number>()
-  for (const p of posts.value ?? []) {
-    for (const t of p.tags) counts.set(t, (counts.get(t) ?? 0) + 1)
-  }
-  return [...counts.entries()].sort((a, b) => b[1] - a[1])
+// 标签云与首页侧边栏共用统计接口
+const { data: stats } = await useFetch<SiteStats>('/api/stats')
+
+// 文章筛选与分页都在服务端完成
+const { data } = await useFetch<PostList>('/api/posts', {
+  query: { t: active, page },
+  watch: [active, page],
 })
 
-const active = computed(() => (route.query.t as string) || '')
+watch(page, () => {
+  if (import.meta.client) window.scrollTo({ top: 0, behavior: 'smooth' })
+})
 
-function selectTag(tag: string) {
-  router.replace({ query: tag === active.value ? {} : { t: tag } })
+// 点击已选中的标签则取消筛选；切换标签时重置页码
+function queryForTag(tag: string) {
+  return tag === active.value ? {} : { t: tag }
 }
-
-const filtered = computed(() => {
-  const list = posts.value ?? []
-  if (!active.value) return list
-  return list.filter((p) => p.tags.includes(active.value))
-})
 </script>
 
 <template>
@@ -35,27 +32,35 @@ const filtered = computed(() => {
     <header class="page-head">
       <h1 class="page-title">标签</h1>
       <p class="page-desc">
-        {{ active ? `「${active}」下有 ${filtered.length} 篇文章` : `共 ${tagCounts.length} 个标签` }}
+        {{ active
+          ? `「${active}」下有 ${data?.total ?? 0} 篇文章`
+          : `共 ${stats?.tagCount ?? 0} 个标签、${data?.total ?? 0} 篇文章` }}
       </p>
     </header>
 
     <div class="tag-cloud">
-      <button
-        v-for="[tag, count] in tagCounts"
-        :key="tag"
-        type="button"
+      <NuxtLink
+        v-for="tag in stats?.tags"
+        :key="tag.name"
+        :to="{ query: queryForTag(tag.name) }"
         class="tag-chip"
-        :class="{ active: tag === active }"
-        @click="selectTag(tag)"
+        :class="{ active: tag.name === active }"
       >
-        # {{ tag }}
-        <span class="tag-count">{{ count }}</span>
-      </button>
+        # {{ tag.name }}
+        <span class="tag-count">{{ tag.count }}</span>
+      </NuxtLink>
     </div>
 
     <section class="feed">
-      <PostCard v-for="post in filtered" :key="post.slug" :post="post" />
+      <PostCard v-for="post in data?.items" :key="post.slug" :post="post" />
+      <p v-if="!data?.items.length" class="empty">这个标签下还没有文章。</p>
     </section>
+
+    <ThePager
+      :page="page"
+      :page-count="data?.pageCount ?? 1"
+      :base-query="active ? { t: active } : {}"
+    />
   </div>
 </template>
 
@@ -123,5 +128,11 @@ const filtered = computed(() => {
   display: flex;
   flex-direction: column;
   gap: 1.1rem;
+}
+
+.empty {
+  text-align: center;
+  color: var(--text-3);
+  padding: 2.5rem 0;
 }
 </style>

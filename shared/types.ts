@@ -19,6 +19,13 @@ export interface PostDetail extends PostMeta {
   toc: TocItem[]
 }
 
+/** 归档页只需要这几个字段，避免传输用不到的摘要 */
+export interface ArchiveItem {
+  slug: string
+  title: string
+  date: string
+}
+
 export interface SiteStats {
   total: number
   tagCount: number

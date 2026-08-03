@@ -1,4 +1,4 @@
-import type { PostDetail, PostList, PostMeta } from '~~/shared/types'
+import type { ArchiveItem, PostDetail, PostList, PostMeta } from '~~/shared/types'
 import type { AdminPost, AdminPostInput } from '~~/shared/admin'
 
 // ---------- 通用 ----------
@@ -60,29 +60,42 @@ function autoExcerpt(content: string): string {
 
 // ---------- 前台（仅已发布） ----------
 
-const PUBLISHED_ORDER = 'ORDER BY pinned DESC, date DESC, id DESC'
+export const PAGE_SIZE = 6
 
-export function listPublished(page: number, pageSize: number): PostList {
+const PUBLISHED_ORDER = 'ORDER BY p.pinned DESC, p.date DESC, p.id DESC'
+
+/** 按页取已发布文章；传 tag 则只取带该标签的文章 */
+export function listPublished(page: number, pageSize: number, tag?: string): PostList {
   const db = useDb()
+  const where = tag
+    ? `WHERE p.status = 'published' AND EXISTS (
+         SELECT 1 FROM post_tags pt JOIN tags t ON t.id = pt.tag_id
+         WHERE pt.post_id = p.id AND t.name = ?
+       )`
+    : `WHERE p.status = 'published'`
+  const params = tag ? [tag] : []
+
   const { n: total } = db
-    .prepare(`SELECT COUNT(*) AS n FROM posts WHERE status = 'published'`)
-    .get() as { n: number }
+    .prepare(`SELECT COUNT(*) AS n FROM posts p ${where}`)
+    .get(...params) as { n: number }
+
   const pageCount = Math.max(1, Math.ceil(total / pageSize))
   const safePage = Math.min(pageCount, Math.max(1, page))
   const rows = db
-    .prepare(
-      `SELECT * FROM posts WHERE status = 'published' ${PUBLISHED_ORDER} LIMIT ? OFFSET ?`,
-    )
-    .all(pageSize, (safePage - 1) * pageSize) as unknown as PostRow[]
+    .prepare(`SELECT p.* FROM posts p ${where} ${PUBLISHED_ORDER} LIMIT ? OFFSET ?`)
+    .all(...params, pageSize, (safePage - 1) * pageSize) as unknown as PostRow[]
+
   return { items: rows.map(rowToMeta), total, page: safePage, pageCount }
 }
 
-export function listAllPublished(): PostList {
-  const rows = useDb()
-    .prepare(`SELECT * FROM posts WHERE status = 'published' ${PUBLISHED_ORDER}`)
-    .all() as unknown as PostRow[]
-  const items = rows.map(rowToMeta)
-  return { items, total: items.length, page: 1, pageCount: 1 }
+/** 归档时间线：全量但只取必要字段，且不受置顶影响 */
+export function listArchive(): ArchiveItem[] {
+  return useDb()
+    .prepare(
+      `SELECT slug, title, date FROM posts
+       WHERE status = 'published' ORDER BY date DESC, id DESC`,
+    )
+    .all() as unknown as ArchiveItem[]
 }
 
 export async function getPublished(slug: string): Promise<PostDetail | null> {
@@ -126,16 +139,24 @@ export function siteStats(): SiteStats {
   return { total, tagCount: tags.length, days, years, tags }
 }
 
-export function searchPublished(q: string): PostMeta[] {
-  const like = `%${q.replace(/[%_]/g, '')}%`
-  const rows = useDb()
-    .prepare(
-      `SELECT * FROM posts
-       WHERE status = 'published' AND (title LIKE ? OR content LIKE ?)
-       ${PUBLISHED_ORDER} LIMIT 50`,
-    )
-    .all(like, like) as unknown as PostRow[]
-  return rows.map(rowToMeta)
+export function searchPublished(q: string, page: number, pageSize: number): PostList {
+  const db = useDb()
+  // 转义 LIKE 的通配符，这样搜索「50%」「a_b」才能命中字面内容
+  const like = `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`
+  const where = `WHERE p.status = 'published'
+    AND (p.title LIKE ? ESCAPE '\\' OR p.content LIKE ? ESCAPE '\\')`
+
+  const { n: total } = db
+    .prepare(`SELECT COUNT(*) AS n FROM posts p ${where}`)
+    .get(like, like) as { n: number }
+
+  const pageCount = Math.max(1, Math.ceil(total / pageSize))
+  const safePage = Math.min(pageCount, Math.max(1, page))
+  const rows = db
+    .prepare(`SELECT p.* FROM posts p ${where} ${PUBLISHED_ORDER} LIMIT ? OFFSET ?`)
+    .all(like, like, pageSize, (safePage - 1) * pageSize) as unknown as PostRow[]
+
+  return { items: rows.map(rowToMeta), total, page: safePage, pageCount }
 }
 
 // ---------- 后台 ----------
