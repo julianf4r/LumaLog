@@ -64,16 +64,12 @@ sudo netfilter-persistent save
 sudo mkdir -p /opt/lumalog && sudo chown $USER /opt/lumalog && cd /opt/lumalog
 ```
 
-把仓库里 `deploy/` 目录下的三个文件放到这里（scp 上传或直接复制粘贴内容）：
-
-- `docker-compose.yml` —— 把里面的 `OWNER` 改成你的 GitHub 用户名（**全小写**）
-- `Caddyfile` —— 不用改
-- `.env.example` —— 复制为 `.env` 并修改：
+把仓库里 `deploy/` 目录下的三个文件放到这里（scp 上传或直接复制粘贴内容）。`docker-compose.yml` 和 `Caddyfile` 不用动，**所有需要你自定义的东西都在 `.env` 里**：
 
 ```bash
 cp .env.example .env
 openssl rand -base64 32   # 把输出填进 .env 的 NUXT_SESSION_PASSWORD
-nano .env                 # 改域名、后台账密
+nano .env                 # 改镜像地址（GitHub 用户名全小写）、域名、后台账密
 ```
 
 启动：

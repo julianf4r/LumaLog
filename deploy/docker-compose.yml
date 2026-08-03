@@ -1,7 +1,7 @@
 services:
   app:
-    # 由 GitHub Actions 构建推送；把 OWNER 换成你的 GitHub 用户名（全小写）
-    image: ghcr.io/OWNER/lumalog:latest
+    # 镜像地址在 .env 里配置，本文件无需修改
+    image: ${LUMALOG_IMAGE}
     restart: unless-stopped
     environment:
       NUXT_ADMIN_USERNAME: ${NUXT_ADMIN_USERNAME}
