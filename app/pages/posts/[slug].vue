@@ -50,27 +50,36 @@ onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
 
 <template>
   <article v-if="post" class="container post">
-    <header class="post-head">
-      <div class="post-meta">
-        <time :datetime="post.date">{{ formatDate(post.date) }}</time>
-        <span class="post-meta-dot" aria-hidden="true" />
-        <span>约 {{ post.readingMinutes }} 分钟</span>
-      </div>
-      <h1 class="post-title">{{ post.title }}</h1>
-      <div class="post-tags">
-        <NuxtLink
-          v-for="tag in post.tags"
-          :key="tag"
-          :to="{ path: '/tags', query: { t: tag } }"
-          class="post-tag"
-        >
-          # {{ tag }}
-        </NuxtLink>
-      </div>
-    </header>
+    <div class="post-grid">
+      <div class="post-main">
+        <header class="post-head">
+          <div class="post-meta">
+            <time :datetime="post.date">{{ formatDate(post.date) }}</time>
+            <span class="post-meta-dot" aria-hidden="true" />
+            <span>约 {{ post.readingMinutes }} 分钟</span>
+          </div>
+          <h1 class="post-title">{{ post.title }}</h1>
+          <div class="post-tags">
+            <NuxtLink
+              v-for="tag in post.tags"
+              :key="tag"
+              :to="{ path: '/tags', query: { t: tag } }"
+              class="post-tag"
+            >
+              # {{ tag }}
+            </NuxtLink>
+          </div>
+        </header>
 
-    <div class="post-body">
-      <div class="prose" @click="onArticleClick" v-html="post.html" />
+        <div class="prose" @click="onArticleClick" v-html="post.html" />
+
+        <footer class="post-foot">
+          <NuxtLink to="/" class="post-back">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6" /></svg>
+            返回小岛
+          </NuxtLink>
+        </footer>
+      </div>
 
       <aside v-if="post.toc.length" class="post-toc" aria-label="文章大纲">
         <nav class="toc">
@@ -90,19 +99,41 @@ onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
         </nav>
       </aside>
     </div>
-
-    <footer class="post-foot">
-      <NuxtLink to="/" class="post-back">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6" /></svg>
-        返回小岛
-      </NuxtLink>
-    </footer>
   </article>
 </template>
 
 <style scoped>
+/* 文章页用更宽的容器：正文列 + 大纲列作为整体居中 */
 .post {
+  max-width: var(--w-post);
   padding-top: 1rem;
+}
+
+/* 大纲列需要撑满整行高度，其内部的 .toc 才有 sticky 的移动空间 */
+.post-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 3rem;
+}
+
+.post-main {
+  min-width: 0;
+}
+
+/* 窄屏收起大纲，正文单栏居中并限制行长 */
+@media (max-width: 1023px) {
+  .post-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .post-main {
+    max-width: 52rem;
+    margin: 0 auto;
+  }
+
+  .post-toc {
+    display: none;
+  }
 }
 
 .post-head {
@@ -158,29 +189,6 @@ onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
 .post-tag:hover {
   border-color: var(--border-strong);
   box-shadow: 0 0 12px var(--glow-violet);
-}
-
-/* —— 正文 + 右侧大纲 ——
-   正文保持居中，大纲绝对定位在容器右侧的富余边距里，
-   仅在足够宽的屏幕上显示，不影响正文的对称留白 */
-.post-body {
-  position: relative;
-}
-
-.post-toc {
-  display: none;
-  position: absolute;
-  left: 100%;
-  top: 0;
-  bottom: 0;
-  width: 230px;
-  margin-left: 3rem;
-}
-
-@media (min-width: 1200px) {
-  .post-toc {
-    display: block;
-  }
 }
 
 .toc {
