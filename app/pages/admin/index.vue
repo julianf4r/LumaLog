@@ -124,8 +124,8 @@ async function remove(post: AdminPost) {
 }
 
 .filter-chip.active {
-  color: #fff;
-  background: var(--grad-accent);
+  color: var(--on-accent);
+  background: var(--accent);
   border-color: transparent;
 }
 
@@ -182,8 +182,8 @@ async function remove(post: AdminPost) {
 }
 
 .badge-pinned {
-  color: #fff;
-  background: var(--grad-accent);
+  color: var(--on-warm);
+  background: var(--accent-warm);
 }
 
 .post-row-meta {

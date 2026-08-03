@@ -1,10 +1,6 @@
 <template>
   <div class="site">
-    <div class="bg-decor" aria-hidden="true">
-      <div class="bg-orb bg-orb--cyan" />
-      <div class="bg-orb bg-orb--violet" />
-      <div class="bg-orb bg-orb--pink" />
-    </div>
+    <BgDecor />
     <SiteHeader />
     <main class="site-main">
       <slot />

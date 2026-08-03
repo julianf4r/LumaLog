@@ -63,10 +63,7 @@ watch(page, () => {
   letter-spacing: 0.12em;
   text-indent: 0.12em;
   line-height: 1.2;
-  background: var(--grad-accent);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--text);
 }
 
 .hero-tagline {
@@ -92,8 +89,8 @@ watch(page, () => {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--grad-accent);
-  box-shadow: 0 0 16px 3px var(--glow-violet), 0 0 6px 1px var(--glow-cyan);
+  background: var(--accent-warm);
+  box-shadow: 0 0 18px 4px var(--glow-warm), 0 0 6px 1px var(--glow-warm);
   animation: beacon 3.2s ease-in-out infinite;
 }
 

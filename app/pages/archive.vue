@@ -69,11 +69,7 @@ const total = computed(() => posts.value?.length ?? 0)
   font-size: 1.6rem;
   font-weight: 700;
   letter-spacing: 0.06em;
-  background: var(--grad-accent);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  opacity: 0.85;
+  color: var(--accent);
 }
 
 .timeline {
@@ -104,7 +100,7 @@ const total = computed(() => posts.value?.length ?? 0)
 
 .timeline-item:hover::before {
   background: var(--accent);
-  box-shadow: 0 0 10px var(--glow-violet);
+  box-shadow: 0 0 10px var(--glow-cool);
 }
 
 .timeline-link {

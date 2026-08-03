@@ -7,7 +7,10 @@ const LANGS = [
   'css', 'html', 'python', 'yaml', 'dockerfile', 'sql', 'markdown', 'nginx',
 ]
 
-const THEMES = { light: 'catppuccin-latte', dark: 'catppuccin-mocha' }
+// 暗色用 ayu-dark：本身就是蓝 + 橙配色，与「夜航」同源且饱和度高、不发灰。
+// 亮色不跟着用 ayu-light —— 它的注释色 #ADAEB1 在浅底上对比度仅 2.0，几乎看不清；
+// github-light 的注释 #6A737D 能到 4.3，可读性优先。
+const THEMES = { light: 'github-light', dark: 'ayu-dark' }
 
 let highlighterPromise: Promise<Highlighter> | null = null
 

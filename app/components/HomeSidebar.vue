@@ -13,7 +13,7 @@ const hasMoreTags = computed(() => (stats.value?.tags.length ?? 0) > TOP_TAGS)
   <div v-if="stats" class="side">
     <!-- 站点名片 -->
     <section class="card-box profile">
-      <span class="profile-mark" aria-hidden="true" />
+      <IsleMark :rings="3" class="profile-mark" />
       <p class="profile-name">光屿</p>
       <p class="profile-en">LUMALOG</p>
       <p class="profile-desc">把每一点微光，都留在这座小岛上。</p>
@@ -97,13 +97,10 @@ const hasMoreTags = computed(() => (stats.value?.tags.length ?? 0) > TOP_TAGS)
 }
 
 .profile-mark {
-  display: block;
-  width: 34px;
-  height: 34px;
-  margin: 0 auto 0.7rem;
-  border-radius: 50%;
-  background: var(--grad-accent);
-  box-shadow: 0 0 20px 4px var(--glow-violet), 0 0 8px var(--glow-cyan);
+  width: 46px;
+  height: 46px;
+  margin: 0 auto 0.8rem;
+  color: var(--accent);
 }
 
 .profile-name {
@@ -174,8 +171,8 @@ const hasMoreTags = computed(() => (stats.value?.tags.length ?? 0) > TOP_TAGS)
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--grad-accent);
-  box-shadow: 0 0 8px var(--glow-violet);
+  background: var(--accent-warm);
+  box-shadow: 0 0 8px var(--glow-warm);
 }
 
 /* ---- 标签云 ---- */

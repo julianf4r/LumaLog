@@ -38,8 +38,8 @@ const year = new Date().getFullYear()
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--grad-accent);
-  box-shadow: 0 0 8px var(--glow-violet);
+  background: var(--accent-warm);
+  box-shadow: 0 0 8px var(--glow-warm);
 }
 
 .footer-copy {

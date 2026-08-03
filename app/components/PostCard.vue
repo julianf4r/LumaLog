@@ -50,8 +50,8 @@ defineProps<{ post: PostMeta }>()
   font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.08em;
-  color: #fff;
-  background: var(--grad-accent);
+  color: var(--on-warm);
+  background: var(--accent-warm);
   border-radius: 999px;
 }
 
