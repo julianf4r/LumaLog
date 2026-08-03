@@ -14,7 +14,7 @@ async function logout() {
     <header class="admin-header">
       <div class="admin-shell admin-header-inner">
         <NuxtLink to="/admin" class="admin-brand">
-          <span class="admin-brand-mark" aria-hidden="true" />
+          <IsleMark class="admin-brand-mark" />
           光屿 · 后台
         </NuxtLink>
         <nav class="admin-nav">
@@ -65,11 +65,9 @@ async function logout() {
 }
 
 .admin-brand-mark {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--grad-accent);
-  box-shadow: 0 0 10px var(--glow-violet);
+  width: 18px;
+  height: 18px;
+  color: var(--accent);
 }
 
 .admin-nav {

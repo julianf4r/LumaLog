@@ -112,10 +112,10 @@ function queryForTag(tag: string) {
 }
 
 .tag-chip.active {
-  color: #fff;
-  background: var(--grad-accent);
+  color: var(--on-accent);
+  background: var(--accent);
   border-color: transparent;
-  box-shadow: 0 4px 16px var(--glow-violet);
+  box-shadow: 0 4px 16px var(--glow-cool);
 }
 
 .tag-count {

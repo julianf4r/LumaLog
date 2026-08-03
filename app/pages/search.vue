@@ -135,7 +135,7 @@ function submit() {
 
 .search-input:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 4px var(--inline-code-bg), 0 4px 20px var(--glow-violet);
+  box-shadow: 0 0 0 4px var(--inline-code-bg), 0 4px 20px var(--glow-cool);
 }
 
 .result-count {

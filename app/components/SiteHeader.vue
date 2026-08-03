@@ -2,7 +2,7 @@
   <header class="header">
     <div class="container-wide header-inner">
       <NuxtLink to="/" class="brand">
-        <span class="brand-mark" aria-hidden="true" />
+        <IsleMark class="brand-mark" />
         <span class="brand-name">光屿</span>
         <span class="brand-sub">LumaLog</span>
       </NuxtLink>
@@ -44,11 +44,9 @@
 
 .brand-mark {
   align-self: center;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--grad-accent);
-  box-shadow: 0 0 12px 2px var(--glow-violet), 0 0 4px var(--glow-cyan);
+  width: 19px;
+  height: 19px;
+  color: var(--accent);
 }
 
 .brand-name {
@@ -87,7 +85,7 @@
   bottom: 0.1rem;
   height: 2px;
   border-radius: 2px;
-  background: var(--grad-accent);
+  background: var(--accent);
   opacity: 0;
   transform: scaleX(0.4);
   transition: opacity 0.22s, transform 0.22s;

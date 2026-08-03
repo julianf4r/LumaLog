@@ -187,7 +187,7 @@ onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
 
 .post-tag:hover {
   border-color: var(--border-strong);
-  box-shadow: 0 0 12px var(--glow-violet);
+  box-shadow: 0 0 12px var(--glow-cool);
 }
 
 .toc {
@@ -214,8 +214,8 @@ onBeforeUnmount(() => window.removeEventListener('scroll', onScroll))
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--grad-accent);
-  box-shadow: 0 0 8px var(--glow-violet);
+  background: var(--accent-warm);
+  box-shadow: 0 0 8px var(--glow-warm);
 }
 
 .toc-link {

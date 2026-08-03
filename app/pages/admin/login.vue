@@ -34,12 +34,10 @@ async function submit() {
 
 <template>
   <div class="login">
-    <div class="bg-decor" aria-hidden="true">
-      <div class="bg-orb bg-orb--cyan" />
-      <div class="bg-orb bg-orb--violet" />
-    </div>
+    <BgDecor />
 
     <form class="login-card" @submit.prevent="submit">
+      <IsleMark :rings="3" class="login-mark" />
       <p class="login-kicker">LUMALOG ADMIN</p>
       <h1 class="login-title">光屿 · 后台</h1>
 
@@ -75,6 +73,13 @@ async function submit() {
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-card);
   backdrop-filter: blur(10px);
+}
+
+.login-mark {
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 0.9rem;
+  color: var(--accent);
 }
 
 .login-kicker {

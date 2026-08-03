@@ -7,7 +7,8 @@ const LANGS = [
   'css', 'html', 'python', 'yaml', 'dockerfile', 'sql', 'markdown', 'nginx',
 ]
 
-const THEMES = { light: 'catppuccin-latte', dark: 'catppuccin-mocha' }
+// 与「夜航」配色呼应：亮色用中性的 github-light，暗色用北欧海冷调的 nord
+const THEMES = { light: 'github-light', dark: 'nord' }
 
 let highlighterPromise: Promise<Highlighter> | null = null
 
