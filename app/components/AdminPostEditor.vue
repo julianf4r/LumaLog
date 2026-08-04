@@ -81,6 +81,15 @@ function insertAtCursor(text: string) {
   })
 }
 
+// 插入图片时带上的尺寸：600 / 600x400 / 50%，留空即原尺寸
+const imgSize = ref('')
+
+function imageMarkdown(url: string) {
+  const size = imgSize.value.trim()
+  const sized = /^\d{1,5}(x\d{1,5})?$|^\d{1,3}%$/.test(size) ? `|${size}` : ''
+  return `\n![图片${sized}](${url})\n`
+}
+
 async function uploadImage(file: File) {
   uploading.value = true
   try {
@@ -90,7 +99,7 @@ async function uploadImage(file: File) {
       method: 'POST',
       body: fd,
     })
-    insertAtCursor(`\n![图片](${url})\n`)
+    insertAtCursor(imageMarkdown(url))
     toast.push('图片已上传')
   } catch (err: any) {
     toast.push(err?.statusMessage || err?.data?.statusMessage || '图片上传失败', 'error')
@@ -117,9 +126,41 @@ function onPickFile() {
 const pickerOpen = ref(false)
 
 function insertFromLibrary(url: string) {
-  insertAtCursor(`\n![图片](${url})\n`)
+  insertAtCursor(imageMarkdown(url))
   pickerOpen.value = false
 }
+
+// —— 提示块 ——
+const CALLOUTS = [
+  { kind: 'TIP', label: '提示' },
+  { kind: 'NOTE', label: '信息' },
+  { kind: 'IMPORTANT', label: '重要' },
+  { kind: 'WARNING', label: '警告' },
+  { kind: 'CAUTION', label: '错误' },
+]
+
+const calloutRef = ref<HTMLElement>()
+const calloutOpen = ref(false)
+
+function insertCallout(kind: string) {
+  calloutOpen.value = false
+  const el = textareaRef.value
+  const selected = el
+    ? form.content.slice(el.selectionStart, el.selectionEnd).trim()
+    : ''
+  const body = (selected || '在这里写内容')
+    .split('\n')
+    .map((line) => `> ${line}`)
+    .join('\n')
+  insertAtCursor(`\n> [!${kind}]\n${body}\n\n`)
+}
+
+function onDocClick(e: MouseEvent) {
+  if (!calloutRef.value?.contains(e.target as Node)) calloutOpen.value = false
+}
+
+onMounted(() => document.addEventListener('click', onDocClick))
+onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
 
 // —— 保存 ——
 const saving = ref(false)
@@ -204,6 +245,31 @@ async function save(status: 'draft' | 'published') {
           {{ uploading ? '上传中…' : '插入图片' }}
         </button>
         <button class="btn btn-sm" type="button" @click="pickerOpen = true">从素材库选择</button>
+        <input
+          v-model="imgSize"
+          class="input editor-size"
+          placeholder="尺寸 600"
+          title="插入图片时的尺寸：600、600x400 或 50%，留空为原尺寸"
+        >
+
+        <div ref="calloutRef" class="editor-menu">
+          <button class="btn btn-sm" type="button" @click="calloutOpen = !calloutOpen">
+            提示块 ▾
+          </button>
+          <div v-if="calloutOpen" class="editor-menu-list">
+            <button
+              v-for="c in CALLOUTS"
+              :key="c.kind"
+              class="editor-menu-item"
+              type="button"
+              @click="insertCallout(c.kind)"
+            >
+              {{ c.label }}
+              <span class="editor-menu-kind">[!{{ c.kind }}]</span>
+            </button>
+          </div>
+        </div>
+
         <span class="editor-hint">支持直接粘贴图片</span>
         <input ref="fileRef" type="file" accept="image/*" hidden @change="onPickFile">
       </div>
@@ -312,6 +378,56 @@ async function save(status: 'draft' | 'published') {
 
 .editor-hint {
   font-size: 0.8rem;
+  color: var(--text-3);
+}
+
+.editor-size {
+  width: 7.5rem;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.85rem;
+}
+
+.editor-menu {
+  position: relative;
+}
+
+.editor-menu-list {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  min-width: 11rem;
+  padding: 0.3rem;
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-card);
+}
+
+.editor-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.88rem;
+  color: var(--text-2);
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: 7px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.editor-menu-item:hover {
+  background: var(--inline-code-bg);
+  color: var(--accent);
+}
+
+.editor-menu-kind {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
   color: var(--text-3);
 }
 

@@ -249,14 +249,43 @@ img {
   margin: 1.15em 0;
 }
 
+.prose h1,
 .prose h2,
 .prose h3,
-.prose h4 {
+.prose h4,
+.prose h5,
+.prose h6 {
   font-weight: 650;
   line-height: 1.4;
   letter-spacing: 0.01em;
+  /* 顶栏是悬浮的，锚点跳转要留出它的高度，否则标题会被盖住 */
   scroll-margin-top: 90px;
   color: var(--text);
+}
+
+/* 标题末尾的 # 锚点：平时隐形，悬停整行才浮现 */
+.prose .heading-anchor {
+  margin-left: 0.4em;
+  font-weight: 400;
+  color: var(--text-3);
+  background: none;
+  opacity: 0;
+  transition: opacity 0.2s, color 0.2s;
+}
+
+.prose :is(h1, h2, h3, h4, h5, h6):hover .heading-anchor {
+  opacity: 1;
+}
+
+.prose .heading-anchor:hover {
+  color: var(--accent);
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .prose .heading-anchor {
+    display: none;
+  }
 }
 
 .prose h2 {
@@ -312,6 +341,81 @@ img {
 
 .prose blockquote p {
   margin: 0.3em 0;
+}
+
+/* ---------------- 提示块 ----------------
+   五种语义色是「夜航」里唯一允许的破例：信息与重要直接借用主色与暖色，
+   另外三种取同样克制的饱和度（提示偏海绿、警告偏琥珀、错误偏珊瑚红），
+   底色一律由该色 mix 出的极淡一层，不引入新的实色背景。 */
+.prose .callout {
+  --callout: var(--accent);
+  margin: 1.6em 0;
+  padding: 0.9em 1.25em;
+  border: 1px solid color-mix(in oklab, var(--callout) 28%, transparent);
+  border-left: 3px solid var(--callout);
+  border-radius: 0 var(--r-md) var(--r-md) 0;
+  background: color-mix(in oklab, var(--callout) 7%, var(--bg-soft));
+  color: var(--text-2);
+}
+
+.prose .callout-note {
+  --callout: var(--accent);
+}
+.prose .callout-tip {
+  --callout: #0f8a72;
+}
+/* 重要不能跟着用 --accent-warm：它和警告的琥珀几乎分不开，
+   五种类型里有两种撞色等于白做。取一支低饱和的紫，只在提示块里出现。 */
+.prose .callout-important {
+  --callout: #7b5ea7;
+}
+.prose .callout-warning {
+  --callout: #c2760a;
+}
+.prose .callout-caution {
+  --callout: #d24b45;
+}
+
+.dark .prose .callout-tip {
+  --callout: #46cfab;
+}
+.dark .prose .callout-important {
+  --callout: #b49ae0;
+}
+.dark .prose .callout-warning {
+  --callout: #e6a53c;
+}
+.dark .prose .callout-caution {
+  --callout: #f2807a;
+}
+
+.prose .callout-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45em;
+  margin: 0 0 0.4em;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  color: var(--callout);
+}
+
+.prose .callout-icon {
+  width: 17px;
+  height: 17px;
+  flex: none;
+}
+
+.prose .callout > p {
+  margin: 0.4em 0;
+}
+
+.prose .callout > *:last-child {
+  margin-bottom: 0;
+}
+
+/* 提示块里的代码块收窄留白，避免嵌套后显得臃肿 */
+.prose .callout .code-block {
+  margin: 0.8em 0;
 }
 
 .prose ul,

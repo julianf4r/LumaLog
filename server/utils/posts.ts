@@ -52,6 +52,8 @@ function autoExcerpt(content: string): string {
   const plain = content
     .replace(/```[\s\S]*?```/g, ' ')
     .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+    // 提示块标记不是正文，别让 [!TIP] 漏进摘要
+    .replace(/\[!(note|tip|important|warning|caution)\]/gi, '')
     .replace(/[#>*`|\[\]]/g, '')
     .replace(/\s+/g, ' ')
     .trim()
