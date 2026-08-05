@@ -98,6 +98,8 @@ docker compose up -d
 git push && git tag v0.2.0 && git push origin v0.2.0
 ```
 
+（单纯 `git push` 只会跑一遍编译检查 CI，不构建镜像；打 tag 才发版。）
+
 **2. 等 Actions 变绿**（约 5–10 分钟，双架构构建较慢）
 
 **3. 服务器上换版本号**

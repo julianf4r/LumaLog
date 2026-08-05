@@ -1,0 +1,33 @@
+name: CI
+
+# 镜像构建已经改成只由 v* tag 触发，main 上的 push 不再有任何 CI 兜底。
+# 这里补一道轻量检查：只确认代码还能编译，单架构、不打包镜像、不推 GHCR，
+# 免得编译错误一直藏到打 tag 发版的那一刻才暴露。
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# 连着推几个 commit 时，取消掉还没跑完的旧检查
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24 # 与 Dockerfile 的 node:24-alpine 对齐
+          cache: npm
+
+      # 与 Dockerfile 一样刻意用 npm install 而非 npm ci：
+      # 本项目的 lockfile 在 Windows 上生成，Linux 下 npm ci 会判定不同步直接失败。
+      # 详细原因见 Dockerfile 里的注释。
+      - run: npm install --no-audit --no-fund
+
+      - run: npm run build
