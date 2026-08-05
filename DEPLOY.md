@@ -23,7 +23,9 @@ git push -u origin main
 git tag v0.1.0 && git push origin v0.1.0
 ```
 
-Actions 会构建 **amd64 + arm64 双架构**镜像（Oracle 的 AMD 和 ARM 机型都能用），发布到 `ghcr.io/<你的用户名>/lumalog:0.1.0`（外加一个 `latest`）。在仓库的 Actions 页面等它变绿即可。
+Actions 会构建镜像并发布到 `ghcr.io/<你的用户名>/lumalog:0.1.0`（外加一个 `latest`）。在仓库的 Actions 页面等它变绿即可。
+
+> **镜像只有 amd64**，对应 Oracle 的 AMD 机型（`VM.Standard.E2.1.Micro`）。如果日后换到免费的 ARM A1.Flex 机型，镜像会拉不起来（报 `no matching manifest for linux/arm64`），需要把 [.github/workflows/docker.yml](.github/workflows/docker.yml) 里的 `platforms` 改回 `linux/amd64,linux/arm64` 并加回 `docker/setup-qemu-action`。
 
 > 版本号规则：git tag 写 `v0.1.0`，镜像标签是不带 v 的 `0.1.0`（Docker 惯例）。自用博客不必纠结语义化版本，改得多就进一位、修个小问题就末位加一即可。
 
@@ -100,7 +102,7 @@ git push && git tag v0.2.0 && git push origin v0.2.0
 
 （单纯 `git push` 只会跑一遍编译检查 CI，不构建镜像；打 tag 才发版。）
 
-**2. 等 Actions 变绿**（约 5–10 分钟，双架构构建较慢）
+**2. 等 Actions 变绿**（单架构，几分钟）
 
 **3. 服务器上换版本号**
 
