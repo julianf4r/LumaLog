@@ -1,8 +1,11 @@
 name: Build & Push Docker Image
 
+# 只有打版本 tag 才构建镜像：push 到 main 不再触发，
+# 「发布」变成一个明确的动作（git tag v0.2.0 && git push origin v0.2.0）。
+# 手动 dispatch 仍可用，但只产出 sha- 标签，不会顶掉 latest。
 on:
   push:
-    branches: [main]
+    tags: ['v*']
   workflow_dispatch:
 
 jobs:
@@ -30,8 +33,11 @@ jobs:
         uses: docker/metadata-action@v6
         with:
           images: ghcr.io/${{ github.repository_owner }}/lumalog
+          # v0.2.0 → 镜像标签 0.2.0（Docker 惯例不带 v）。
+          # latest 由默认的 flavor=latest=auto 处理：只有正式版 tag 会带上，
+          # v0.3.0-rc.1 这类预发布不会顶掉 latest。
           tags: |
-            type=raw,value=latest
+            type=semver,pattern={{version}}
             type=sha
 
       - name: Build and push (amd64 + arm64)
@@ -42,5 +48,9 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # 缓存必须放 registry 而不是 type=gha：GHA 缓存按 ref 隔离，
+          # 每个 tag 都是一个新 ref，只能读默认分支的缓存——而现在 main 已经
+          # 不再构建、那份缓存永远不会更新，等于每次发版都从零 npm install
+          # （arm64 还要走 QEMU 模拟，非常慢）。registry 缓存不分 ref，通用。
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/lumalog:buildcache
+          cache-to: type=registry,ref=ghcr.io/${{ github.repository_owner }}/lumalog:buildcache,mode=max

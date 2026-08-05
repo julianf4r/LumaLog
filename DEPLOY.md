@@ -17,7 +17,15 @@ git remote add origin https://github.com/<你的用户名>/LumaLog.git
 git push -u origin main
 ```
 
-推送后 GitHub Actions 会自动构建 **amd64 + arm64 双架构**镜像（Oracle 的 AMD 和 ARM 机型都能用），发布到 `ghcr.io/<你的用户名>/lumalog:latest`。在仓库的 Actions 页面等它变绿即可。
+**push 本身不会构建镜像**，只有打版本 tag 才会。发布第一版：
+
+```bash
+git tag v0.1.0 && git push origin v0.1.0
+```
+
+Actions 会构建 **amd64 + arm64 双架构**镜像（Oracle 的 AMD 和 ARM 机型都能用），发布到 `ghcr.io/<你的用户名>/lumalog:0.1.0`（外加一个 `latest`）。在仓库的 Actions 页面等它变绿即可。
+
+> 版本号规则：git tag 写 `v0.1.0`，镜像标签是不带 v 的 `0.1.0`（Docker 惯例）。自用博客不必纠结语义化版本，改得多就进一位、修个小问题就末位加一即可。
 
 > **重要**：首次构建成功后，到 GitHub 个人主页 → Packages → lumalog → Package settings，把可见性改成 **Public**。这样服务器拉镜像不需要登录（镜像里不含任何密钥，公开无风险；账密都在服务器的 .env 里）。
 
@@ -82,13 +90,39 @@ docker compose up -d
 
 ## 四、日常更新（发布新版本）
 
-本地改完代码推送 GitHub，Actions 构建完成后，在服务器上：
+改代码 → push（不构建）→ 想发布时打 tag → 服务器换版本号。三步：
+
+**1. 本地打 tag 发布**
 
 ```bash
-cd /opt/lumalog && docker compose pull app && docker compose up -d app
+git push && git tag v0.2.0 && git push origin v0.2.0
+```
+
+**2. 等 Actions 变绿**（约 5–10 分钟，双架构构建较慢）
+
+**3. 服务器上换版本号**
+
+```bash
+cd /opt/lumalog
+sed -i 's|/lumalog:.*|/lumalog:0.2.0|' .env   # 或手动 nano .env 改这一行
+docker compose pull app && docker compose up -d app
 ```
 
 写文章不属于「更新」——直接在网页后台写就行，数据都在服务器的 `data/` 目录里。
+
+### 回滚
+
+把 `.env` 里的版本号改回上一个，再 `docker compose pull app && docker compose up -d app`。旧镜像在 GHCR 上一直留着，改一行就退回去了。
+
+紧急情况下如果想退到某个还没打 tag 的 commit，每次构建也都留了一个 `sha-<7位commit>` 标签（在 GitHub 的 Packages 页面能看到全部标签），写法一样：`ghcr.io/<你的用户名>/lumalog:sha-7807855`。
+
+### 查当前跑的是哪一版
+
+```bash
+grep LUMALOG_IMAGE /opt/lumalog/.env
+```
+
+因为版本号写死在 `.env` 里，这一行就是答案。（如果你把它改回了 `latest`，就得靠 `docker inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' $(docker compose ps -q app)` 反查 commit——这正是不推荐用 latest 的原因。）
 
 ## 五、备份
 

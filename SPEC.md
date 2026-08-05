@@ -67,7 +67,8 @@
 - **反向代理**：Caddy，自动申请/续期 HTTPS 证书。
 - **运行**：Docker Compose（应用容器 + Caddy），SQLite 数据文件与图片目录挂载卷持久化。
 - **关键环境变量**：`NUXT_ADMIN_USERNAME` / `NUXT_ADMIN_PASSWORD`（管理员账密，开发默认 admin / lumalog-dev，**生产必须覆盖**）、`NUXT_SESSION_PASSWORD`（会话加密密钥，32 位以上随机串）、`NUXT_DATA_DIR`（数据目录，默认 `.data`，存放 SQLite 与上传图片）。
-- **更新流程**：本地/CI 构建镜像 → 服务器拉取 → 重启容器。
+- **版本管理**：镜像构建由 **git tag 触发**（`v*`），push 到 main 不构建——「发布」是一个明确的动作，而不是每次改错别字都顶掉线上镜像。git tag `v0.2.0` → 镜像标签 `0.2.0`（另有 `latest` 与每次构建的 `sha-<commit>`）。服务器 `.env` 里固定写版本号而非 `latest`：当前版本一目了然，回滚就是把版本号改回上一个。
+- **更新流程**：本地打 tag → CI 构建镜像 → 服务器改 `.env` 版本号并拉取 → 重启容器。
 - 运行内存预算约 150–250MB，1G 内存 + swap 兜底，绰绰有余。
 
 ## 6. 已明确的取舍记录
