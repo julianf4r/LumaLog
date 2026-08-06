@@ -1,30 +1,40 @@
 <script setup lang="ts">
-import type { AdminPost } from '~~/shared/admin'
+import type { AdminPost, AdminPostList, AdminStatusFilter } from '~~/shared/admin'
 
 definePageMeta({ layout: 'admin', middleware: 'admin-auth' })
 useHead({ title: '文章管理 · 光屿' })
 
-const { data: posts, refresh } = await useFetch<AdminPost[]>('/api/admin/posts')
+const route = useRoute()
+
+// 筛选与分页都走 URL：刷新、前进后退、收藏某一页都能正常工作
+const filter = computed<AdminStatusFilter>(() =>
+  route.query.status === 'published' || route.query.status === 'draft'
+    ? route.query.status
+    : 'all',
+)
+const page = computed(() => Math.max(1, Number(route.query.page) || 1))
+
+// URL 写成函数，query 一变 useFetch 自己重新请求
+const { data, refresh } = await useFetch<AdminPostList>(
+  () => `/api/admin/posts?page=${page.value}&status=${filter.value}`,
+)
 
 const toast = useToast()
 const dialog = useDialog()
 
-const filter = ref<'all' | 'published' | 'draft'>('all')
+const counts = computed(
+  () => data.value?.counts ?? { all: 0, published: 0, draft: 0 },
+)
 
-const filtered = computed(() => {
-  const list = posts.value ?? []
-  if (filter.value === 'all') return list
-  return list.filter((p) => p.status === filter.value)
-})
+/** 翻页时要带上的筛选参数（全部则不写，保持地址干净） */
+const baseQuery = computed(() =>
+  filter.value === 'all' ? {} : { status: filter.value },
+)
 
-const counts = computed(() => {
-  const list = posts.value ?? []
-  return {
-    all: list.length,
-    published: list.filter((p) => p.status === 'published').length,
-    draft: list.filter((p) => p.status === 'draft').length,
-  }
-})
+function queryForFilter(f: AdminStatusFilter) {
+  // 切筛选一律回到第一页，否则可能落在超出范围的页码上
+  return f === 'all' ? {} : { status: f }
+}
 
 async function togglePin(post: AdminPost) {
   await $fetch(`/api/admin/posts/${post.id}`, {
@@ -47,6 +57,11 @@ async function remove(post: AdminPost) {
   await $fetch(`/api/admin/posts/${post.id}`, { method: 'DELETE' })
   await refresh()
   toast.push('文章已删除')
+
+  // 删掉的是本页最后一篇时，别把人留在一个空页上
+  if (!data.value?.items.length && page.value > 1) {
+    await navigateTo({ query: { ...baseQuery.value, page: String(page.value - 1) } })
+  }
 }
 </script>
 
@@ -54,23 +69,22 @@ async function remove(post: AdminPost) {
   <div>
     <div class="toolbar">
       <div class="filters">
-        <button
+        <NuxtLink
           v-for="f in (['all', 'published', 'draft'] as const)"
           :key="f"
-          type="button"
           class="filter-chip"
           :class="{ active: filter === f }"
-          @click="filter = f"
+          :to="{ query: queryForFilter(f) }"
         >
           {{ f === 'all' ? '全部' : f === 'published' ? '已发布' : '草稿' }}
           <span class="filter-count">{{ counts[f] }}</span>
-        </button>
+        </NuxtLink>
       </div>
       <NuxtLink to="/admin/posts/new" class="btn btn-primary">写新文章</NuxtLink>
     </div>
 
     <div class="post-list">
-      <div v-for="post in filtered" :key="post.id" class="post-row">
+      <div v-for="post in data?.items ?? []" :key="post.id" class="post-row">
         <div class="post-row-main">
           <div class="post-row-title-line">
             <span :class="['badge', post.status === 'published' ? 'badge-published' : 'badge-draft']">
@@ -97,8 +111,17 @@ async function remove(post: AdminPost) {
         </div>
       </div>
 
-      <p v-if="!filtered.length" class="empty">这里还没有文章。</p>
+      <p v-if="!data?.items.length" class="empty">
+        {{ filter === 'draft' ? '还没有草稿。' : filter === 'published' ? '还没有发布过文章。' : '这里还没有文章。' }}
+      </p>
     </div>
+
+    <ThePager
+      v-if="data"
+      :page="data.page"
+      :page-count="data.pageCount"
+      :base-query="baseQuery"
+    />
   </div>
 </template>
 

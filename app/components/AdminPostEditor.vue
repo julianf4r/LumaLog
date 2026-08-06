@@ -166,6 +166,10 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
 const saving = ref(false)
 const errorMsg = ref('')
 
+// 文章真正的 id。新文章一开始是 null，被自动保存创建出来之后就有了值——
+// 发布按钮必须认这个 id，否则会再 POST 一次、变成两篇。
+const postId = ref<number | null>(props.post?.id ?? null)
+
 function payload(status: 'draft' | 'published') {
   return {
     title: form.title,
@@ -187,14 +191,15 @@ async function save(status: 'draft' | 'published') {
   errorMsg.value = ''
   saving.value = true
   try {
-    if (isEdit.value) {
-      await $fetch(`/api/admin/posts/${props.post!.id}`, {
+    if (postId.value) {
+      await $fetch(`/api/admin/posts/${postId.value}`, {
         method: 'PUT',
         body: payload(status),
       })
     } else {
       await $fetch('/api/admin/posts', { method: 'POST', body: payload(status) })
     }
+    savedSnapshot = snapshot()
     await navigateTo('/admin')
     toast.push(status === 'published' ? '文章已发布' : '草稿已保存')
   } catch (err: any) {
@@ -205,6 +210,112 @@ async function save(status: 'draft' | 'published') {
     saving.value = false
   }
 }
+
+// —— 定时自动保存草稿 ——
+// 只对新文章和草稿生效。已发布的文章刻意不自动保存：那会把还没写完的段落
+// 悄悄推到线上去，比丢掉几分钟草稿严重得多。
+const AUTOSAVE_MS = 30_000
+
+const autoSaving = ref(false)
+const autoSavedAt = ref<Date | null>(null)
+const autoSaveError = ref('')
+
+const isPublished = computed(() => props.post?.status === 'published')
+
+function snapshot() {
+  return JSON.stringify(payload('draft'))
+}
+
+// 打开时的内容算作「已保存」，什么都没改就不该产生请求
+let savedSnapshot = snapshot()
+let autosaveTimer: ReturnType<typeof setInterval> | null = null
+
+// 刻意不做成响应式的 dirty：那要在每次按键时把整篇文章 stringify 一遍，
+// 长文章下白白烧 CPU。只有定时器和关页面时才真正需要这个判断
+function isDirty() {
+  return snapshot() !== savedSnapshot
+}
+
+const autosaveHint = computed(() => {
+  if (isPublished.value) return '已发布的文章不会自动保存'
+  if (autoSaveError.value) return autoSaveError.value
+  if (autoSaving.value) return '自动保存中…'
+  if (autoSavedAt.value) {
+    const t = autoSavedAt.value.toTimeString().slice(0, 8)
+    return `草稿已自动保存 ${t}`
+  }
+  if (!form.title.trim()) return '填标题后每 30 秒自动存一次草稿'
+  return '每 30 秒自动保存草稿'
+})
+
+async function autosave() {
+  if (isPublished.value || saving.value || autoSaving.value) return
+  const snap = snapshot()
+  if (snap === savedSnapshot) return
+  // 标题和 slug 是服务端的必填项，缺了只会换来一个 400
+  if (!form.title.trim() || !form.slug.trim()) return
+
+  autoSaving.value = true
+  try {
+    if (postId.value) {
+      await $fetch(`/api/admin/posts/${postId.value}`, {
+        method: 'PUT',
+        body: payload('draft'),
+      })
+    } else {
+      const created = await $fetch<AdminPost>('/api/admin/posts', {
+        method: 'POST',
+        body: payload('draft'),
+      })
+      postId.value = created.id
+      // 地址栏换成这篇草稿的编辑页：刷新或误关标签页之后回来还能接着写。
+      // 保留 history.state，Nuxt 的路由要靠它记录当前位置
+      history.replaceState(history.state, '', `/admin/posts/${created.id}`)
+    }
+    savedSnapshot = snap
+    autoSavedAt.value = new Date()
+    autoSaveError.value = ''
+  } catch (err: any) {
+    // 自动保存失败不弹 toast 打断写作，只在状态条上标出来
+    autoSaveError.value =
+      '自动保存失败：' + (err?.statusMessage || err?.data?.statusMessage || '请手动保存')
+  } finally {
+    autoSaving.value = false
+  }
+}
+
+// 两次自动保存之间最多丢 30 秒，关页面前再拦一道
+function onBeforeUnload(e: BeforeUnloadEvent) {
+  if (isDirty()) e.preventDefault()
+}
+
+onMounted(() => {
+  autosaveTimer = setInterval(autosave, AUTOSAVE_MS)
+  window.addEventListener('beforeunload', onBeforeUnload)
+})
+
+onBeforeUnmount(() => {
+  if (autosaveTimer) clearInterval(autosaveTimer)
+  window.removeEventListener('beforeunload', onBeforeUnload)
+})
+
+// —— 左右滚动同步 ——
+// 按比例同步：源码行与渲染结果没有稳定的一一对应关系（一行 Markdown 可能
+// 渲染成一整块代码，也可能什么都不产生），比例滚动是这里最实在的做法。
+const previewRef = ref<HTMLElement>()
+
+function syncScroll() {
+  const src = textareaRef.value
+  const dst = previewRef.value
+  if (!src || !dst) return
+  const srcMax = src.scrollHeight - src.clientHeight
+  const dstMax = dst.scrollHeight - dst.clientHeight
+  if (srcMax <= 0 || dstMax <= 0) return
+  dst.scrollTop = (src.scrollTop / srcMax) * dstMax
+}
+
+// 预览重新渲染后高度会变，跟着校正一次，不然位置会漂
+watch(previewHtml, () => nextTick(syncScroll))
 </script>
 
 <template>
@@ -285,8 +396,9 @@ async function save(status: 'draft' | 'published') {
         class="textarea editor-content"
         placeholder="用 Markdown 书写正文…"
         @paste="onPaste"
+        @scroll.passive="syncScroll"
       />
-      <div v-if="showPreview" class="editor-preview">
+      <div v-if="showPreview" ref="previewRef" class="editor-preview">
         <div class="prose" v-html="previewHtml" />
       </div>
     </div>
@@ -300,7 +412,13 @@ async function save(status: 'draft' | 'published') {
     <p v-if="errorMsg" class="editor-error">{{ errorMsg }}</p>
 
     <div class="editor-actions">
-      <NuxtLink to="/admin" class="btn">取消</NuxtLink>
+      <div class="editor-actions-left">
+        <NuxtLink to="/admin" class="btn">取消</NuxtLink>
+        <span class="editor-autosave" :class="{ error: autoSaveError }">
+          <span v-if="autoSaving" class="editor-autosave-dot" aria-hidden="true" />
+          {{ autosaveHint }}
+        </span>
+      </div>
       <div class="editor-actions-right">
         <button class="btn" type="button" :disabled="saving" @click="save('draft')">
           {{ post?.status === 'published' ? '转为草稿' : '存草稿' }}
@@ -482,8 +600,52 @@ async function save(status: 'draft' | 'published') {
   margin-top: 1.2rem;
 }
 
+.editor-actions-left {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
 .editor-actions-right {
   display: flex;
   gap: 0.6rem;
+}
+
+.editor-autosave {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.editor-autosave.error {
+  color: #e5484d;
+}
+
+.editor-autosave-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: autosave-pulse 1s ease-in-out infinite;
+}
+
+@keyframes autosave-pulse {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .editor-autosave-dot {
+    animation: none;
+    opacity: 0.8;
+  }
 }
 </style>

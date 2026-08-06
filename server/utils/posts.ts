@@ -1,5 +1,10 @@
 import type { ArchiveItem, PostDetail, PostList, PostMeta } from '~~/shared/types'
-import type { AdminPost, AdminPostInput } from '~~/shared/admin'
+import type {
+  AdminPost,
+  AdminPostInput,
+  AdminPostList,
+  AdminStatusFilter,
+} from '~~/shared/admin'
 
 // ---------- 通用 ----------
 
@@ -54,6 +59,9 @@ function autoExcerpt(content: string): string {
     .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
     // 提示块标记不是正文，别让 [!TIP] 漏进摘要
     .replace(/\[!(note|tip|important|warning|caution)\]/gi, '')
+    // 数学公式在摘要里只会是一串 LaTeX 源码，整段去掉
+    .replace(/\$\$[\s\S]*?\$\$/g, ' ')
+    .replace(/\$[^$\n]+\$/g, ' ')
     .replace(/[#>*`|\[\]]/g, '')
     .replace(/\s+/g, ' ')
     .trim()
@@ -178,11 +186,42 @@ function rowToAdmin(row: PostRow): AdminPost {
   }
 }
 
-export function adminListPosts(): AdminPost[] {
-  const rows = useDb()
-    .prepare(`SELECT * FROM posts ORDER BY pinned DESC, date DESC, id DESC`)
-    .all() as unknown as PostRow[]
-  return rows.map(rowToAdmin)
+export const ADMIN_PAGE_SIZE = 12
+
+const ADMIN_ORDER = 'ORDER BY pinned DESC, date DESC, id DESC'
+
+/** 后台列表：按状态筛选 + 分页，同时返回三种筛选各自的总数 */
+export function adminListPosts(
+  page = 1,
+  status: AdminStatusFilter = 'all',
+): AdminPostList {
+  const db = useDb()
+
+  const rows = db
+    .prepare('SELECT status, COUNT(*) AS n FROM posts GROUP BY status')
+    .all() as unknown as { status: 'draft' | 'published'; n: number }[]
+  const counts = { all: 0, published: 0, draft: 0 }
+  for (const r of rows) {
+    counts[r.status] = r.n
+    counts.all += r.n
+  }
+
+  const total = counts[status]
+  const pageCount = Math.max(1, Math.ceil(total / ADMIN_PAGE_SIZE))
+  const safePage = Math.min(pageCount, Math.max(1, page))
+  const offset = (safePage - 1) * ADMIN_PAGE_SIZE
+
+  const items = (
+    status === 'all'
+      ? db
+          .prepare(`SELECT * FROM posts ${ADMIN_ORDER} LIMIT ? OFFSET ?`)
+          .all(ADMIN_PAGE_SIZE, offset)
+      : db
+          .prepare(`SELECT * FROM posts WHERE status = ? ${ADMIN_ORDER} LIMIT ? OFFSET ?`)
+          .all(status, ADMIN_PAGE_SIZE, offset)
+  ) as unknown as PostRow[]
+
+  return { items: items.map(rowToAdmin), total, page: safePage, pageCount, counts }
 }
 
 export function adminGetPost(id: number): AdminPost | null {

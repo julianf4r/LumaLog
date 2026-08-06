@@ -461,6 +461,33 @@ img {
   border-radius: 6px;
 }
 
+/* 数学公式（KaTeX 已在服务端渲染完，这里只管排版） */
+.prose .katex {
+  /* KaTeX 默认 1.21em，在正文里显得比周围字大一圈 */
+  font-size: 1.08em;
+}
+
+/* 块级公式被插件包在 <p class="katex-block"> 里，外边距交给它，
+   否则和 .prose p 的边距叠加会空出一大截 */
+.prose .katex-block {
+  margin: 1.6em 0;
+}
+
+/* 公式过宽时自己横向滚动，绝不把正文撑破 */
+.prose .katex-display {
+  margin: 0;
+  padding: 0.2em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* 写错的公式就地标红并划波浪线，不打断整篇渲染 */
+.prose .katex-error {
+  color: #e5484d;
+  text-decoration: underline wavy #e5484d;
+  text-underline-offset: 3px;
+}
+
 /* 表格 */
 .prose .table-wrap {
   margin: 1.6em 0;

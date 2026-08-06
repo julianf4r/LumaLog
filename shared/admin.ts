@@ -11,6 +11,17 @@ export interface AdminPost {
   updatedAt: string
 }
 
+export type AdminStatusFilter = 'all' | 'published' | 'draft'
+
+export interface AdminPostList {
+  items: AdminPost[]
+  total: number
+  page: number
+  pageCount: number
+  /** 三种筛选各自的总数，用于筛选条上的角标——分页后不能再在前端数了 */
+  counts: Record<AdminStatusFilter, number>
+}
+
 /** 引用了某张图片的文章 */
 export interface MediaRef {
   id: number

@@ -1,11 +1,16 @@
 import MarkdownIt from 'markdown-it'
 import type Token from 'markdown-it/lib/token.mjs'
+import katexModule from '@vscode/markdown-it-katex'
 import { createHighlighter, type Highlighter } from 'shiki'
 import type { TocItem } from '~~/shared/types'
 
+// 只加真的会写到的语言：每种语法都会常驻在 highlighter 单例里占一份内存。
+// 不在表里的语言不会报错，但会静默降级成无高亮的纯文本。
+// 别名由 shiki 自动带上（js / ts / py / sh / yml / md 等都能直接写）。
 const LANGS = [
   'javascript', 'typescript', 'tsx', 'vue', 'bash', 'shell', 'json',
   'css', 'html', 'python', 'yaml', 'dockerfile', 'sql', 'markdown', 'nginx',
+  'diff', 'toml', 'ini', 'xml', 'powershell', 'go', 'rust', 'bat',
 ]
 
 // 暗色用 ayu-dark：本身就是蓝 + 橙配色，与「夜航」同源且饱和度高、不发灰。
@@ -28,6 +33,11 @@ const COPY_BUTTON =
   '<svg class="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
   '<svg class="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
   '</button>'
+
+// 这个包是 CJS，module.exports = { default: fn }：ESM 下 import 到的是那层壳，
+// 真正的插件在 .default 上。写成兼容两种形态，免得升级后突然拿到函数本身。
+const katexPlugin = ((katexModule as any).default ??
+  katexModule) as MarkdownIt.PluginWithOptions<{ throwOnError: boolean; errorColor: string }>
 
 function escapeHtml(s: string) {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
@@ -114,6 +124,17 @@ async function getMd() {
     const md = new MarkdownIt({ html: false, linkify: true })
 
     md.core.ruler.after('block', 'lumalog_alerts', alertsRule)
+
+    // 数学公式：$...$ 行内、$$...$$ 块级，服务端直接渲染成 HTML，
+    // 前台只需要一份 KaTeX 的 CSS + 字体，没有任何客户端 JS。
+    // 用插件而不是自己写分隔符规则：$ 的转义、"$5 和 $10" 这类货币写法、
+    // 公式里的 _ 不能被当成斜体，这些边界情况插件已经处理好了。
+    // katex 固定在 ^0.16：插件依赖的就是这个大版本，CSS 与渲染出的 HTML 必须同版本。
+    md.use(katexPlugin, {
+      // 公式写错时就地标红（样式见 .katex-error），而不是整篇渲染抛错
+      throwOnError: false,
+      errorColor: '#e5484d',
+    })
 
     // 命中提示块的引用整体换成 <div class="callout">，并补一行标题
     md.renderer.rules.blockquote_open = (tokens, idx, options, env, self) => {

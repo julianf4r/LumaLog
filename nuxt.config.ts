@@ -11,7 +11,9 @@ export default defineNuxtConfig({
     dataDir: '.data',
   },
 
-  css: ['~/assets/css/main.css'],
+  // KaTeX 的样式表：公式在服务端就渲染成 HTML 了，浏览器只需要这份 CSS
+  // 和它引用的字体（字体按需下载，没有公式的页面不会加载）
+  css: ['~/assets/css/main.css', 'katex/dist/katex.min.css'],
 
   app: {
     head: {
