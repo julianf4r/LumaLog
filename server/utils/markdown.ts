@@ -143,7 +143,10 @@ let mdPromise: Promise<MarkdownIt> | null = null
 async function getMd() {
   mdPromise ??= (async () => {
     const highlighter = await getHighlighter()
-    const md = new MarkdownIt({ html: false, linkify: true })
+    // linkify 关掉：裸文本里的 github.com、a@b.com 不再被自动变成链接。
+    // 写博客时经常只是想提一下某个域名或包名，自动链接反而是噪音。
+    // 要链接就显式写 [文字](地址) 或 <https://…>，这两种不受影响。
+    const md = new MarkdownIt({ html: false, linkify: false })
 
     md.core.ruler.after('block', 'lumalog_alerts', alertsRule)
 
