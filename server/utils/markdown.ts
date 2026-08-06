@@ -108,6 +108,28 @@ function alertsRule(state: { tokens: Token[] }) {
   }
 }
 
+// —— 围栏信息行：```ts {2,5-7} title="server/utils/markdown.ts" ——
+// 行高亮的 {1,3-5} 是各家通用写法；路径用 title="..." 而非方括号，
+// 一是和行高亮的花括号不打架，二是路径里有空格或中文也不会出歧义。
+const TITLE_RE = /title=(?:"([^"]*)"|'([^']*)'|(\S+))/
+const RANGES_RE = /\{([\d,\s-]+)\}/
+
+function parseFenceMeta(meta: string): { title: string; highlightedLines: Set<number> } {
+  const title = TITLE_RE.exec(meta)
+  const lines = new Set<number>()
+
+  const ranges = RANGES_RE.exec(meta)
+  for (const part of ranges?.[1]?.split(',') ?? []) {
+    const [from, to] = part.split('-').map((n) => Number(n.trim()))
+    if (!from || from < 1) continue
+    // 上界卡死，免得 {1-99999} 之类的写法撑出一个巨大的 Set
+    const end = Math.min(to && to >= from ? to : from, from + 999)
+    for (let i = from; i <= end; i++) lines.add(i)
+  }
+
+  return { title: (title?.[1] ?? title?.[2] ?? title?.[3] ?? '').trim(), highlightedLines: lines }
+}
+
 // —— 图片尺寸：`![图片|600](url)`、`|600x400`、`|50%` ——
 const SIZE_RE = /^([\s\S]*?)\s*\|\s*(\d{1,5})(?:x(\d{1,5}))?(%?)\s*$/
 
@@ -175,17 +197,33 @@ async function getMd() {
 
     md.renderer.rules.fence = (tokens, idx) => {
       const token = tokens[idx]!
-      const lang = (token.info || '').trim().split(/\s+/)[0] || ''
+      const info = (token.info || '').trim()
+      const lang = info.split(/\s+/)[0] || ''
       const known = highlighter.getLoadedLanguages().includes(lang)
+      const { title, highlightedLines } = parseFenceMeta(info.slice(lang.length))
+
       // 围栏内容总是以换行结尾，直接交给 shiki 会多渲染一行空行（还带行号）
       const code = highlighter.codeToHtml(token.content.replace(/\n+$/, ''), {
         lang: known ? lang : 'text',
         themes: THEMES,
         defaultColor: false,
+        transformers: highlightedLines.size
+          ? [
+              {
+                line(node, line) {
+                  if (highlightedLines.has(line)) this.addClassToHast(node, 'line-hl')
+                },
+              },
+            ]
+          : [],
       })
+
+      const titleTag = title
+        ? `<span class="code-path" title="${escapeHtml(title)}">${escapeHtml(title)}</span>`
+        : ''
       return (
         `<div class="code-block"><div class="code-block-head">` +
-        `<span class="code-lang">${escapeHtml(lang || 'text')}</span>${COPY_BUTTON}` +
+        `${titleTag}<span class="code-lang">${escapeHtml(lang || 'text')}</span>${COPY_BUTTON}` +
         `</div>${code}</div>`
       )
     }

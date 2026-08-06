@@ -555,6 +555,18 @@ img {
   flex: none;
 }
 
+/* 文件路径：占据中间的富余空间，过长时省略（完整路径在 title 属性里） */
+.code-path {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  color: var(--text-2);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 .code-lang {
   font-family: var(--font-mono);
   font-size: 0.72rem;
@@ -632,6 +644,18 @@ img {
   color: var(--text-3);
   opacity: 0.55;
   user-select: none;
+}
+
+/* 高亮行：一层淡底 + 左侧色条。色条用 box-shadow 而不是 border，
+   避免占据宽度让这一行的文字比其他行错开一个像素 */
+.code-block pre code .line-hl {
+  background: color-mix(in oklab, var(--accent) 13%, transparent);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.code-block pre code .line-hl::before {
+  color: var(--accent);
+  opacity: 0.9;
 }
 
 /* ---------------- 表单与按钮（后台复用） ---------------- */
@@ -752,6 +776,13 @@ img {
 .shiki,
 .shiki span {
   color: var(--shiki-light);
+}
+
+/* 抹掉主题给每个 token 带的底色，让代码块自己的背景透出来。
+   :not(.line-hl) 是必须的——这条带 !important，不排除高亮行的话
+   会把行高亮的淡底一起抹平，只剩左边那道色条 */
+.shiki,
+.shiki span:not(.line-hl) {
   background-color: transparent !important;
 }
 
